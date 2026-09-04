@@ -16,7 +16,7 @@ if [ -f "$HOME/.gitconfig-host" ]; then
 fi
 
 corepack enable
-corepack prepare yarn@1.22.22 --activate
+corepack prepare yarn@1.22.19 --activate
 
 git config --global --add safe.directory "$workspace_dir"
 git lfs install --skip-repo

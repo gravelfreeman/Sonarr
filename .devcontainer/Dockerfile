@@ -16,14 +16,14 @@ RUN set -eux; \
         gnupg \
         jq \
         less \
-        libasound2t64 \
-        libatk-bridge2.0-0t64 \
-        libatk1.0-0t64 \
-        libcups2t64 \
+        libasound2 \
+        libatk-bridge2.0-0 \
+        libatk1.0-0 \
+        libcups2 \
         libdrm2 \
         libgbm1 \
-        libglib2.0-0t64 \
-        libgtk-3-0t64 \
+        libglib2.0-0 \
+        libgtk-3-0 \
         libnspr4 \
         libnss3 \
         libu2f-udev \
