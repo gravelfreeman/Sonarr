@@ -1,6 +1,8 @@
-using System;
+ using System;
 using System.IO;
+using System.Linq;
 using NLog;
+using NzbDrone.Common;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Extensions;
@@ -8,13 +10,17 @@ using NzbDrone.Core.Configuration;
 using NzbDrone.Core.MediaFiles.Commands;
 using NzbDrone.Core.MediaFiles.EpisodeImport;
 using NzbDrone.Core.Messaging.Commands;
+using NzbDrone.Core.RootFolders;
 
 namespace NzbDrone.Core.MediaFiles
 {
     public interface IRecycleBinProvider
     {
         void DeleteFolder(string path);
-        string DeleteFile(string path, string subfolder = "");
+        void DeleteFolder(string path, RecycleBinOperation operation);
+        string DeleteFile(string path);
+        string DeleteFile(string path, string subfolder);
+        string DeleteFile(string path, string subfolder, RecycleBinOperation operation);
         void Empty();
         void Cleanup();
     }
@@ -24,33 +30,50 @@ namespace NzbDrone.Core.MediaFiles
         private readonly IDiskTransferService _diskTransferService;
         private readonly IDiskProvider _diskProvider;
         private readonly IConfigService _configService;
+        private readonly IRootFolderService _rootFolderService;
         private readonly Logger _logger;
 
         public RecycleBinProvider(IDiskTransferService diskTransferService,
                                   IDiskProvider diskProvider,
                                   IConfigService configService,
+                                  IRootFolderService rootFolderService,
                                   Logger logger)
         {
             _diskTransferService = diskTransferService;
             _diskProvider = diskProvider;
             _configService = configService;
+            _rootFolderService = rootFolderService;
             _logger = logger;
         }
 
         public void DeleteFolder(string path)
         {
-            _logger.Info("Attempting to send '{0}' to recycling bin", path);
-            var recyclingBin = _configService.RecycleBin;
+            DeleteFolder(path, RecycleBinOperation.Delete);
+        }
 
-            if (string.IsNullOrWhiteSpace(recyclingBin))
+        public void DeleteFolder(string path, RecycleBinOperation operation)
+        {
+            _logger.Info("Attempting to send '{0}' to recycling bin", path);
+
+            if (!ShouldUseRecycleBin(path, operation))
             {
-                _logger.Info("Recycling Bin has not been configured, deleting permanently. {0}", path);
+                _logger.Info("Recycling Bin is disabled, deleting permanently. {0}", path);
                 _diskProvider.DeleteFolder(path, true);
                 _logger.Debug("Folder has been permanently deleted: {0}", path);
             }
             else
             {
-                var destination = Path.Combine(recyclingBin, new DirectoryInfo(path).Name);
+                var destination = GetRecycleBinDestination(path);
+
+                if (destination.IsNullOrWhiteSpace())
+                {
+                    throw new RecycleBinException($"Unable to determine the recycling bin destination for folder '{path}'");
+                }
+
+                var destinationParent = new DirectoryInfo(destination).Parent.FullName;
+
+                _logger.Debug("Creating folder {0}", destinationParent);
+                _diskProvider.CreateFolder(destinationParent);
 
                 _logger.Debug("Moving '{0}' to '{1}'", path, destination);
                 _diskTransferService.TransferFolder(path, destination, TransferMode.Move);
@@ -66,14 +89,23 @@ namespace NzbDrone.Core.MediaFiles
             }
         }
 
-        public string DeleteFile(string path, string subfolder = "")
+        public string DeleteFile(string path)
+        {
+            return DeleteFile(path, string.Empty, RecycleBinOperation.Delete);
+        }
+
+        public string DeleteFile(string path, string subfolder)
+        {
+            return DeleteFile(path, subfolder, RecycleBinOperation.Delete);
+        }
+
+        public string DeleteFile(string path, string subfolder, RecycleBinOperation operation)
         {
             _logger.Debug("Attempting to send '{0}' to recycling bin", path);
-            var recyclingBin = _configService.RecycleBin;
 
-            if (string.IsNullOrWhiteSpace(recyclingBin))
+            if (!ShouldUseRecycleBin(path, operation))
             {
-                _logger.Info("Recycling Bin has not been configured, deleting permanently. {0}", path);
+                _logger.Info("Recycling Bin is disabled, deleting permanently. {0}", path);
 
                 if (OsInfo.IsWindows)
                 {
@@ -88,8 +120,14 @@ namespace NzbDrone.Core.MediaFiles
             else
             {
                 var fileInfo = new FileInfo(path);
-                var destinationFolder = Path.Combine(recyclingBin, subfolder);
-                var destination = Path.Combine(destinationFolder, fileInfo.Name);
+                var destination = GetRecycleBinDestination(path);
+
+                if (destination.IsNullOrWhiteSpace())
+                {
+                    throw new RecycleBinException($"Unable to determine the recycling bin destination for file '{path}'");
+                }
+
+                var destinationFolder = new FileInfo(destination).Directory.FullName;
 
                 try
                 {
@@ -137,22 +175,30 @@ namespace NzbDrone.Core.MediaFiles
 
         public void Empty()
         {
-            if (string.IsNullOrWhiteSpace(_configService.RecycleBin))
+            if (!_configService.RecycleBinEnabled)
             {
-                _logger.Info("Recycle Bin has not been configured, cannot empty.");
+                _logger.Info("Recycle Bin is disabled, cannot empty.");
                 return;
             }
 
             _logger.Info("Removing all items from the recycling bin");
 
-            foreach (var folder in _diskProvider.GetDirectories(_configService.RecycleBin))
+            foreach (var recycleBin in GetRecycleBins())
             {
-                _diskProvider.DeleteFolder(folder, true);
-            }
+                if (!_diskProvider.FolderExists(recycleBin))
+                {
+                    continue;
+                }
 
-            foreach (var file in _diskProvider.GetFiles(_configService.RecycleBin, false))
-            {
-                _diskProvider.DeleteFile(file);
+                foreach (var folder in _diskProvider.GetDirectories(recycleBin))
+                {
+                    _diskProvider.DeleteFolder(folder, true);
+                }
+
+                foreach (var file in _diskProvider.GetFiles(recycleBin, false))
+                {
+                    _diskProvider.DeleteFile(file);
+                }
             }
 
             _logger.Debug("Recycling Bin has been emptied.");
@@ -160,9 +206,9 @@ namespace NzbDrone.Core.MediaFiles
 
         public void Cleanup()
         {
-            if (string.IsNullOrWhiteSpace(_configService.RecycleBin))
+            if (!_configService.RecycleBinEnabled)
             {
-                _logger.Info("Recycle Bin has not been configured, cannot cleanup.");
+                _logger.Info("Recycle Bin is disabled, cannot cleanup.");
                 return;
             }
 
@@ -176,20 +222,90 @@ namespace NzbDrone.Core.MediaFiles
 
             _logger.Info("Removing items older than {0} days from the recycling bin", cleanupDays);
 
-            foreach (var file in _diskProvider.GetFiles(_configService.RecycleBin, true))
+            foreach (var recycleBin in GetRecycleBins())
             {
-                if (_diskProvider.FileGetLastWrite(file).AddDays(cleanupDays) > DateTime.UtcNow)
+                if (!_diskProvider.FolderExists(recycleBin))
                 {
-                    _logger.Debug("File hasn't expired yet, skipping: {0}", file);
                     continue;
                 }
 
-                _diskProvider.DeleteFile(file);
+                foreach (var file in _diskProvider.GetFiles(recycleBin, true))
+                {
+                    if (_diskProvider.FileGetLastWrite(file).AddDays(cleanupDays) > DateTime.UtcNow)
+                    {
+                        _logger.Debug("File hasn't expired yet, skipping: {0}", file);
+                        continue;
+                    }
+
+                    try
+                    {
+                        _diskProvider.DeleteFile(file);
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        _logger.Error(ex.Message);
+                    }
+                }
+
+                _diskProvider.RemoveEmptySubfolders(recycleBin);
             }
 
-            _diskProvider.RemoveEmptySubfolders(_configService.RecycleBin);
-
             _logger.Debug("Recycling Bin has been cleaned up.");
+        }
+
+        private string GetRecycleBin(string path)
+        {
+            var rootFolder = _rootFolderService.GetBestRootFolder(path);
+
+            if (rootFolder == null)
+            {
+                return null;
+            }
+
+            return RecycleBinPathBuilder.GetRecycleBinPath(path);
+        }
+
+        private string GetRecycleBinDestination(string path)
+        {
+            if (GetRecycleBin(path).IsNullOrWhiteSpace())
+            {
+                return null;
+            }
+
+            return RecycleBinPathBuilder.GetRecycleBinDestination(path);
+        }
+
+        private bool ShouldUseRecycleBin(string path, RecycleBinOperation operation)
+        {
+            if (!_configService.RecycleBinEnabled)
+            {
+                return false;
+            }
+
+            var rootFolder = _rootFolderService.GetBestRootFolder(path);
+
+            if (rootFolder?.RecycleBinEnabled != true)
+            {
+                return false;
+            }
+
+            return _configService.RecycleBinMode switch
+            {
+                RecycleBinMode.Both => true,
+                RecycleBinMode.UpgradesOnly => operation == RecycleBinOperation.Upgrade,
+                RecycleBinMode.DeletesOnly => operation == RecycleBinOperation.Delete,
+                _ => true
+            };
+        }
+
+        private string[] GetRecycleBins()
+        {
+            return _rootFolderService.All()
+                                     .Where(r => r.RecycleBinEnabled)
+                                     .Select(r => RecycleBinPathBuilder.GetRecycleBinDestination(r.Path))
+                                     .Where(r => r.IsNotNullOrWhiteSpace())
+                                     .Distinct(PathEqualityComparer.Instance)
+                                     .ToArray();
         }
 
         private void SetLastWriteTime(string file, DateTime dateTime)

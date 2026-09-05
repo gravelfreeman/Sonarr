@@ -6702,6 +6702,43 @@
             }
           }
         }
+      },
+      "put": {
+        "tags": [
+          "RootFolder"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RootFolderResource"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RootFolderResource"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v3/seasonpass": {
@@ -10065,9 +10102,16 @@
           "autoUnmonitorPreviouslyDownloadedEpisodes": {
             "type": "boolean"
           },
-          "recycleBin": {
-            "type": "string",
-            "nullable": true
+          "recycleBinEnabled": {
+            "type": "boolean"
+          },
+          "recycleBinMode": {
+            "enum": [
+              "both",
+              "upgradesOnly",
+              "deletesOnly"
+            ],
+            "type": "string"
           },
           "recycleBinCleanupDays": {
             "type": "integer",
@@ -11526,6 +11570,9 @@
           "path": {
             "type": "string",
             "nullable": true
+          },
+          "recycleBinEnabled": {
+            "type": "boolean"
           },
           "accessible": {
             "type": "boolean"

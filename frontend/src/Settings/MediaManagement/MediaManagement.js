@@ -100,7 +100,66 @@ const fileDateOptions = [
   }
 ];
 
+const recycleBinModeOptions = [
+  {
+    key: 'both',
+    get value() {
+      return translate('Both');
+    }
+  },
+  {
+    key: 'upgradesOnly',
+    get value() {
+      return translate('UpgradesOnly');
+    }
+  },
+  {
+    key: 'deletesOnly',
+    get value() {
+      return translate('DeletesOnly');
+    }
+  }
+];
+
 class MediaManagement extends Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      recycleBinEnabledPending: {}
+    };
+  }
+
+  onRecycleBinEnabledPendingChange = (id, recycleBinEnabledPending, recycleBinEnabled) => {
+    this.setState((state) => {
+      const nextPendingChanges = { ...state.recycleBinEnabledPending };
+
+      if (recycleBinEnabledPending === recycleBinEnabled) {
+        delete nextPendingChanges[id];
+      } else {
+        nextPendingChanges[id] = recycleBinEnabledPending;
+      }
+
+      return { recycleBinEnabledPending: nextPendingChanges };
+    });
+  };
+
+  onSavePress = () => {
+    const { onSavePress, updateRootFolder } = this.props;
+    const { recycleBinEnabledPending } = this.state;
+
+    onSavePress();
+
+    Object.entries(recycleBinEnabledPending).forEach(([id, recycleBinEnabled]) => {
+      updateRootFolder({
+        id: Number(id),
+        recycleBinEnabled
+      });
+    });
+
+    this.setState({ recycleBinEnabledPending: {} });
+  };
 
   //
   // Render
@@ -114,16 +173,19 @@ class MediaManagement extends Component {
       hasSettings,
       isWindows,
       onInputChange,
-      onSavePress,
       ...otherProps
     } = this.props;
+    const { recycleBinEnabledPending } = this.state;
+    delete otherProps.updateRootFolder;
+    delete otherProps.onSavePress;
 
     return (
       <PageContent title={translate('MediaManagementSettings')}>
         <SettingsToolbarConnector
           advancedSettings={advancedSettings}
           {...otherProps}
-          onSavePress={onSavePress}
+          hasPendingChanges={otherProps.hasPendingChanges || Object.keys(recycleBinEnabledPending).length > 0}
+          onSavePress={this.onSavePress}
         />
 
         <PageContentBody>
@@ -426,11 +488,28 @@ class MediaManagement extends Component {
                     <FormLabel>{translate('RecyclingBin')}</FormLabel>
 
                     <FormInputGroup
-                      type={inputTypes.PATH}
-                      name="recycleBin"
+                      type={inputTypes.CHECK}
+                      name="recycleBinEnabled"
                       helpText={translate('RecyclingBinHelpText')}
                       onChange={onInputChange}
-                      {...settings.recycleBin}
+                      {...settings.recycleBinEnabled}
+                    />
+                  </FormGroup>
+
+                  <FormGroup
+                    advancedSettings={advancedSettings}
+                    isAdvanced={true}
+                  >
+                    <FormLabel>{translate('UseRecyclingBinFor')}</FormLabel>
+
+                    <FormInputGroup
+                      type={inputTypes.SELECT}
+                      name="recycleBinMode"
+                      helpText={translate('UseRecyclingBinForHelpText')}
+                      values={recycleBinModeOptions}
+                      isDisabled={!settings.recycleBinEnabled.value}
+                      onChange={onInputChange}
+                      {...settings.recycleBinMode}
                     />
                   </FormGroup>
 
@@ -512,7 +591,10 @@ class MediaManagement extends Component {
           }
 
           <FieldSet legend={translate('RootFolders')}>
-            <RootFolders />
+            <RootFolders
+              recycleBinEnabledPending={recycleBinEnabledPending}
+              onRecycleBinEnabledPendingChange={this.onRecycleBinEnabledPendingChange}
+            />
             <AddRootFolder />
           </FieldSet>
         </PageContentBody>
@@ -530,7 +612,8 @@ MediaManagement.propTypes = {
   hasSettings: PropTypes.bool.isRequired,
   isWindows: PropTypes.bool.isRequired,
   onSavePress: PropTypes.func.isRequired,
-  onInputChange: PropTypes.func.isRequired
+  onInputChange: PropTypes.func.isRequired,
+  updateRootFolder: PropTypes.func.isRequired
 };
 
 export default MediaManagement;

@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
+import { updateRootFolder } from 'Store/Actions/rootFolderActions';
 import { fetchMediaManagementSettings, saveMediaManagementSettings, saveNamingSettings, setMediaManagementSettingsValue } from 'Store/Actions/settingsActions';
 import createSettingsSectionSelector from 'Store/Selectors/createSettingsSectionSelector';
 import createSystemStatusSelector from 'Store/Selectors/createSystemStatusSelector';
@@ -33,6 +34,7 @@ const mapDispatchToProps = {
   setMediaManagementSettingsValue,
   saveMediaManagementSettings,
   saveNamingSettings,
+  updateRootFolder,
   clearPendingChanges
 };
 
@@ -80,7 +82,8 @@ MediaManagementConnector.propTypes = {
   setMediaManagementSettingsValue: PropTypes.func.isRequired,
   saveMediaManagementSettings: PropTypes.func.isRequired,
   saveNamingSettings: PropTypes.func.isRequired,
-  clearPendingChanges: PropTypes.func.isRequired
+  clearPendingChanges: PropTypes.func.isRequired,
+  updateRootFolder: PropTypes.func.isRequired
 };
 
 export default connect(createMapStateToProps, mapDispatchToProps)(MediaManagementConnector);

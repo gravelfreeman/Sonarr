@@ -27,12 +27,28 @@ const rootFolderColumns = [
     isVisible: true,
   },
   {
+    name: 'recycleBinEnabled',
+    label: () => translate('RecyclingBin'),
+    isVisible: true,
+  },
+  {
     name: 'actions',
     isVisible: true,
   },
 ];
 
-function RootFolders() {
+interface RootFoldersProps {
+  recycleBinEnabledPending?: Record<number, boolean>;
+  onRecycleBinEnabledPendingChange?: (
+    id: number,
+    recycleBinEnabledPending: boolean,
+    recycleBinEnabled: boolean
+  ) => void;
+}
+
+function RootFolders(props: RootFoldersProps) {
+  const { recycleBinEnabledPending = {}, onRecycleBinEnabledPendingChange } =
+    props;
   const { isFetching, isPopulated, error, items } = useSelector(
     createRootFoldersSelector()
   );
@@ -62,9 +78,17 @@ function RootFolders() {
               key={rootFolder.id}
               id={rootFolder.id}
               path={rootFolder.path}
+              recycleBinEnabled={rootFolder.recycleBinEnabled}
+              recycleBinEnabledPending={
+                recycleBinEnabledPending[rootFolder.id] ??
+                rootFolder.recycleBinEnabled
+              }
               accessible={rootFolder.accessible}
               freeSpace={rootFolder.freeSpace}
               unmappedFolders={rootFolder.unmappedFolders}
+              onRecycleBinEnabledPendingChange={
+                onRecycleBinEnabledPendingChange
+              }
             />
           );
         })}

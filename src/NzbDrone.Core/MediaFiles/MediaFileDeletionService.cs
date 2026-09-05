@@ -73,7 +73,7 @@ namespace NzbDrone.Core.MediaFiles
 
                 try
                 {
-                    _recycleBinProvider.DeleteFile(fullPath, subfolder);
+                    _recycleBinProvider.DeleteFile(fullPath, subfolder, RecycleBinOperation.Delete);
                 }
                 catch (Exception e)
                 {
@@ -118,7 +118,7 @@ namespace NzbDrone.Core.MediaFiles
 
                     if (_diskProvider.FolderExists(series.Path))
                     {
-                        _recycleBinProvider.DeleteFolder(series.Path);
+                        _recycleBinProvider.DeleteFolder(series.Path, RecycleBinOperation.Delete);
                     }
 
                     _eventAggregator.PublishEvent(new DeleteCompletedEvent());
