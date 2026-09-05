@@ -8,6 +8,14 @@ namespace NzbDrone.Core.Datastore.Migration
     {
         protected override void MainDbUpgrade()
         {
+            Execute.Sql("INSERT INTO \"Config\" (\"Key\", \"Value\") " +
+                        "SELECT 'recyclebinenabled', 'True' " +
+                        "FROM \"Config\" " +
+                        "WHERE \"Key\" = 'recyclebin' " +
+                        "AND \"Value\" IS NOT NULL " +
+                        "AND TRIM(\"Value\") <> '' " +
+                        "AND NOT EXISTS (SELECT 1 FROM \"Config\" WHERE \"Key\" = 'recyclebinenabled')");
+
             Alter.Table("RootFolders")
                  .AddColumn("RecycleBinEnabled")
                  .AsBoolean()
