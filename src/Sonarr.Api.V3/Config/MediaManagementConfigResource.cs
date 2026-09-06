@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.EpisodeImport;
@@ -32,6 +33,7 @@ namespace Sonarr.Api.V3.Config
         public bool ImportExtraFiles { get; set; }
         public string ExtraFileExtensions { get; set; }
         public bool EnableMediaInfo { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
         public List<RootFolderUpdateResource> RootFolderUpdates { get; set; }
     }
 

@@ -43,40 +43,40 @@ type RootFolderUpdate = {
   recycleBinEnabled: boolean;
 };
 
+const EMPTY_ROOT_FOLDER_UPDATES: RootFolderUpdate[] = [];
+
 interface RootFoldersProps {
-  rootFolderUpdates?: RootFolderUpdate[];
-  onInputChange?: InputOnChange<RootFolderUpdate[]>;
+  rootFolderUpdates?: RootFolderUpdate[] | null;
+  onInputChange?: InputOnChange<RootFolderUpdate[] | null>;
 }
 
 function RootFolders(props: RootFoldersProps) {
-  const { rootFolderUpdates = [], onInputChange } = props;
+  const { rootFolderUpdates: pendingUpdates, onInputChange } = props;
+  const rootFolderUpdates = pendingUpdates ?? EMPTY_ROOT_FOLDER_UPDATES;
   const { isFetching, isPopulated, error, items } = useSelector(
     createRootFoldersSelector()
   );
 
-  const recycleBinEnabledPending = rootFolderUpdates.reduce(
-    (result, update) => {
-      result[update.id] = update.recycleBinEnabled;
-      return result;
-    },
-    {} as Record<number, boolean>
-  );
+  const rootFolderUpdatesById = rootFolderUpdates.reduce((result, update) => {
+    result[update.id] = update;
+    return result;
+  }, {} as Record<number, RootFolderUpdate>);
 
   const onRecycleBinChange = useCallback(
-    (
-      id: number,
-      recycleBinEnabledPending: boolean,
-      recycleBinEnabled: boolean
-    ) => {
+    (id: number, recycleBinEnabled: boolean) => {
       const updates = rootFolderUpdates.filter((update) => update.id !== id);
+      const rootFolder = items.find((item) => item.id === id);
 
-      if (recycleBinEnabledPending !== recycleBinEnabled) {
-        updates.push({ id, recycleBinEnabled: recycleBinEnabledPending });
+      if (rootFolder?.recycleBinEnabled !== recycleBinEnabled) {
+        updates.push({ id, recycleBinEnabled });
       }
 
-      onInputChange?.({ name: 'rootFolderUpdates', value: updates });
+      onInputChange?.({
+        name: 'rootFolderUpdates',
+        value: updates.length > 0 ? updates : null,
+      });
     },
-    [onInputChange, rootFolderUpdates]
+    [items, onInputChange, rootFolderUpdates]
   );
 
   const dispatch = useDispatch();
@@ -104,9 +104,8 @@ function RootFolders(props: RootFoldersProps) {
               key={rootFolder.id}
               id={rootFolder.id}
               path={rootFolder.path}
-              recycleBinEnabled={rootFolder.recycleBinEnabled}
-              recycleBinEnabledPending={
-                recycleBinEnabledPending[rootFolder.id] ??
+              recycleBinEnabled={
+                rootFolderUpdatesById[rootFolder.id]?.recycleBinEnabled ??
                 rootFolder.recycleBinEnabled
               }
               accessible={rootFolder.accessible}

@@ -18,15 +18,10 @@ interface RootFolderRowProps {
   id: number;
   path: string;
   recycleBinEnabled: boolean;
-  recycleBinEnabledPending: boolean;
   accessible: boolean;
   freeSpace?: number;
   unmappedFolders: object[];
-  onRecycleBinChange?: (
-    id: number,
-    recycleBinEnabledPending: boolean,
-    recycleBinEnabled: boolean
-  ) => void;
+  onRecycleBinChange?: (id: number, recycleBinEnabled: boolean) => void;
 }
 
 function RootFolderRow(props: RootFolderRowProps) {
@@ -34,7 +29,6 @@ function RootFolderRow(props: RootFolderRowProps) {
     id,
     path,
     recycleBinEnabled,
-    recycleBinEnabledPending,
     accessible,
     freeSpace = 0,
     unmappedFolders = [],
@@ -63,9 +57,9 @@ function RootFolderRow(props: RootFolderRowProps) {
 
   const onRecycleBinEnabledInputChange = useCallback(
     ({ value }: CheckInputChanged) => {
-      onRecycleBinChange?.(id, value, recycleBinEnabled);
+      onRecycleBinChange?.(id, value);
     },
-    [id, recycleBinEnabled, onRecycleBinChange]
+    [id, onRecycleBinChange]
   );
 
   return (
@@ -99,7 +93,7 @@ function RootFolderRow(props: RootFolderRowProps) {
       <TableRowCell className={styles.recycleBinEnabled}>
         <CheckInput
           name={`recycleBinEnabled-${id}`}
-          value={recycleBinEnabledPending}
+          value={recycleBinEnabled}
           onChange={onRecycleBinEnabledInputChange}
         />
       </TableRowCell>
