@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.Linq;
 using NLog;
@@ -54,6 +55,28 @@ namespace NzbDrone.Core.Configuration
 
         public void SaveConfigDictionary(Dictionary<string, object> configValues)
         {
+            SaveConfigValues(configValues, (key, value) => SetValue(key, value));
+
+            _eventAggregator.PublishEvent(new ConfigSavedEvent());
+        }
+
+        public void SaveConfigDictionary(Dictionary<string, object> configValues, Action<IDbConnection, IDbTransaction> transactionAction)
+        {
+            using (var connection = _repository.OpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                SaveConfigValues(configValues, (key, value) => _repository.Upsert(key.ToLowerInvariant(), value, connection, transaction));
+
+                transactionAction?.Invoke(connection, transaction);
+                transaction.Commit();
+            }
+
+            ClearCache();
+            _eventAggregator.PublishEvent(new ConfigSavedEvent());
+        }
+
+        private void SaveConfigValues(Dictionary<string, object> configValues, Action<string, string> saveValue)
+        {
             var allWithDefaults = AllWithDefaults();
 
             foreach (var configValue in configValues)
@@ -64,15 +87,11 @@ namespace NzbDrone.Core.Configuration
                     continue;
                 }
 
-                var equal = configValue.Value.ToString().Equals(currentValue.ToString());
-
-                if (!equal)
+                if (!configValue.Value.ToString().Equals(currentValue.ToString()))
                 {
-                    SetValue(configValue.Key, configValue.Value.ToString());
+                    saveValue(configValue.Key, configValue.Value.ToString());
                 }
             }
-
-            _eventAggregator.PublishEvent(new ConfigSavedEvent());
         }
 
         public bool IsDefined(string key)

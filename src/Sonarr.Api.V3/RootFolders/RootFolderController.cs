@@ -57,16 +57,6 @@ namespace Sonarr.Api.V3.RootFolders
             return Created(_rootFolderService.Add(model).Id);
         }
 
-        [RestPutById]
-        [Consumes("application/json")]
-        public ActionResult<RootFolderResource> UpdateRootFolder([FromBody] RootFolderResource rootFolderResource)
-        {
-            var existing = _rootFolderService.Get(rootFolderResource.Id, false);
-            existing.RecycleBinEnabled = rootFolderResource.RecycleBinEnabled;
-
-            return Accepted(_rootFolderService.Update(existing).Id);
-        }
-
         [HttpGet]
         [Produces("application/json")]
         public List<RootFolderResource> GetRootFolders()

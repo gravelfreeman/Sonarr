@@ -1,7 +1,7 @@
 import { batchActions } from 'redux-batched-actions';
 import { createThunk, handleThunks } from 'Store/thunks';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
-import { set, updateItem } from './baseActions';
+import { set } from './baseActions';
 import createFetchHandler from './Creators/createFetchHandler';
 import createHandleActions from './Creators/createHandleActions';
 import createRemoveItemHandler from './Creators/createRemoveItemHandler';
@@ -28,7 +28,6 @@ export const defaultState = {
 
 export const FETCH_ROOT_FOLDERS = 'rootFolders/fetchRootFolders';
 export const ADD_ROOT_FOLDER = 'rootFolders/addRootFolder';
-export const UPDATE_ROOT_FOLDER = 'rootFolders/updateRootFolder';
 export const DELETE_ROOT_FOLDER = 'rootFolders/deleteRootFolder';
 
 //
@@ -36,7 +35,6 @@ export const DELETE_ROOT_FOLDER = 'rootFolders/deleteRootFolder';
 
 export const fetchRootFolders = createThunk(FETCH_ROOT_FOLDERS);
 export const addRootFolder = createThunk(ADD_ROOT_FOLDER);
-export const updateRootFolder = createThunk(UPDATE_ROOT_FOLDER);
 export const deleteRootFolder = createThunk(DELETE_ROOT_FOLDER);
 
 //
@@ -51,25 +49,6 @@ export const actionHandlers = handleThunks({
     '/rootFolder',
     (state) => state.rootFolders
   ),
-
-  [UPDATE_ROOT_FOLDER]: function(getState, payload, dispatch) {
-    const { id, recycleBinEnabled } = payload;
-
-    const promise = createAjaxRequest({
-      url: `/rootFolder/${id}`,
-      method: 'PUT',
-      data: JSON.stringify({ id, recycleBinEnabled }),
-      dataType: 'json'
-    }).request;
-
-    promise.done(() => {
-      dispatch(updateItem({
-        section,
-        id,
-        recycleBinEnabled
-      }));
-    });
-  },
 
   [ADD_ROOT_FOLDER]: function(getState, payload, dispatch) {
     const path = payload.path;

@@ -123,44 +123,6 @@ const recycleBinModeOptions = [
 
 class MediaManagement extends Component {
 
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      recycleBinEnabledPending: {}
-    };
-  }
-
-  onRecycleBinEnabledPendingChange = (id, recycleBinEnabledPending, recycleBinEnabled) => {
-    this.setState((state) => {
-      const nextPendingChanges = { ...state.recycleBinEnabledPending };
-
-      if (recycleBinEnabledPending === recycleBinEnabled) {
-        delete nextPendingChanges[id];
-      } else {
-        nextPendingChanges[id] = recycleBinEnabledPending;
-      }
-
-      return { recycleBinEnabledPending: nextPendingChanges };
-    });
-  };
-
-  onSavePress = () => {
-    const { onSavePress, updateRootFolder } = this.props;
-    const { recycleBinEnabledPending } = this.state;
-
-    onSavePress();
-
-    Object.entries(recycleBinEnabledPending).forEach(([id, recycleBinEnabled]) => {
-      updateRootFolder({
-        id: Number(id),
-        recycleBinEnabled
-      });
-    });
-
-    this.setState({ recycleBinEnabledPending: {} });
-  };
-
   //
   // Render
 
@@ -173,10 +135,9 @@ class MediaManagement extends Component {
       hasSettings,
       isWindows,
       onInputChange,
+      pendingChanges,
       ...otherProps
     } = this.props;
-    const { recycleBinEnabledPending } = this.state;
-    delete otherProps.updateRootFolder;
     delete otherProps.onSavePress;
 
     return (
@@ -184,8 +145,7 @@ class MediaManagement extends Component {
         <SettingsToolbarConnector
           advancedSettings={advancedSettings}
           {...otherProps}
-          hasPendingChanges={otherProps.hasPendingChanges || Object.keys(recycleBinEnabledPending).length > 0}
-          onSavePress={this.onSavePress}
+          onSavePress={this.props.onSavePress}
         />
 
         <PageContentBody>
@@ -592,8 +552,8 @@ class MediaManagement extends Component {
 
           <FieldSet legend={translate('RootFolders')}>
             <RootFolders
-              recycleBinEnabledPending={recycleBinEnabledPending}
-              onRecycleBinEnabledPendingChange={this.onRecycleBinEnabledPendingChange}
+              rootFolderUpdates={pendingChanges.rootFolderUpdates || []}
+              onInputChange={onInputChange}
             />
             <AddRootFolder />
           </FieldSet>
@@ -613,7 +573,7 @@ MediaManagement.propTypes = {
   isWindows: PropTypes.bool.isRequired,
   onSavePress: PropTypes.func.isRequired,
   onInputChange: PropTypes.func.isRequired,
-  updateRootFolder: PropTypes.func.isRequired
+  pendingChanges: PropTypes.object.isRequired
 };
 
 export default MediaManagement;

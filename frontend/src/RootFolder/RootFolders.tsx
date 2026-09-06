@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Alert from 'Components/Alert';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
@@ -7,6 +7,7 @@ import TableBody from 'Components/Table/TableBody';
 import { kinds } from 'Helpers/Props';
 import { fetchRootFolders } from 'Store/Actions/rootFolderActions';
 import createRootFoldersSelector from 'Store/Selectors/createRootFoldersSelector';
+import { InputOnChange } from 'typings/inputs';
 import translate from 'Utilities/String/translate';
 import RootFolderRow from './RootFolderRow';
 
@@ -37,20 +38,45 @@ const rootFolderColumns = [
   },
 ];
 
+type RootFolderUpdate = {
+  id: number;
+  recycleBinEnabled: boolean;
+};
+
 interface RootFoldersProps {
-  recycleBinEnabledPending?: Record<number, boolean>;
-  onRecycleBinEnabledPendingChange?: (
-    id: number,
-    recycleBinEnabledPending: boolean,
-    recycleBinEnabled: boolean
-  ) => void;
+  rootFolderUpdates?: RootFolderUpdate[];
+  onInputChange?: InputOnChange<RootFolderUpdate[]>;
 }
 
 function RootFolders(props: RootFoldersProps) {
-  const { recycleBinEnabledPending = {}, onRecycleBinEnabledPendingChange } =
-    props;
+  const { rootFolderUpdates = [], onInputChange } = props;
   const { isFetching, isPopulated, error, items } = useSelector(
     createRootFoldersSelector()
+  );
+
+  const recycleBinEnabledPending = rootFolderUpdates.reduce(
+    (result, update) => {
+      result[update.id] = update.recycleBinEnabled;
+      return result;
+    },
+    {} as Record<number, boolean>
+  );
+
+  const onRecycleBinChange = useCallback(
+    (
+      id: number,
+      recycleBinEnabledPending: boolean,
+      recycleBinEnabled: boolean
+    ) => {
+      const updates = rootFolderUpdates.filter((update) => update.id !== id);
+
+      if (recycleBinEnabledPending !== recycleBinEnabled) {
+        updates.push({ id, recycleBinEnabled: recycleBinEnabledPending });
+      }
+
+      onInputChange?.({ name: 'rootFolderUpdates', value: updates });
+    },
+    [onInputChange, rootFolderUpdates]
   );
 
   const dispatch = useDispatch();
@@ -86,9 +112,7 @@ function RootFolders(props: RootFoldersProps) {
               accessible={rootFolder.accessible}
               freeSpace={rootFolder.freeSpace}
               unmappedFolders={rootFolder.unmappedFolders}
-              onRecycleBinEnabledPendingChange={
-                onRecycleBinEnabledPendingChange
-              }
+              onRecycleBinChange={onRecycleBinChange}
             />
           );
         })}

@@ -22,9 +22,9 @@ interface RootFolderRowProps {
   accessible: boolean;
   freeSpace?: number;
   unmappedFolders: object[];
-  onPendingRecycleBinEnabledChange?: (
+  onRecycleBinChange?: (
     id: number,
-    pendingRecycleBinEnabled: boolean,
+    recycleBinEnabledPending: boolean,
     recycleBinEnabled: boolean
   ) => void;
 }
@@ -38,7 +38,7 @@ function RootFolderRow(props: RootFolderRowProps) {
     accessible,
     freeSpace = 0,
     unmappedFolders = [],
-    onPendingRecycleBinEnabledChange,
+    onRecycleBinChange,
   } = props;
 
   const isUnavailable = !accessible;
@@ -63,9 +63,9 @@ function RootFolderRow(props: RootFolderRowProps) {
 
   const onRecycleBinEnabledInputChange = useCallback(
     ({ value }: CheckInputChanged) => {
-      onPendingRecycleBinEnabledChange?.(id, value, recycleBinEnabled);
+      onRecycleBinChange?.(id, value, recycleBinEnabled);
     },
-    [id, recycleBinEnabled, onPendingRecycleBinEnabledChange]
+    [id, recycleBinEnabled, onRecycleBinChange]
   );
 
   return (
