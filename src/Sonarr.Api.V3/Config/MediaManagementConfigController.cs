@@ -6,6 +6,8 @@ using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Datastore.Events;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.RootFolders;
 using NzbDrone.Core.Validation;
 using NzbDrone.Core.Validation.Paths;
@@ -18,15 +20,18 @@ namespace Sonarr.Api.V3.Config
     {
         private readonly IRootFolderService _rootFolderService;
         private readonly IRootFolderRepository _rootFolderRepository;
+        private readonly IEventAggregator _eventAggregator;
 
         public MediaManagementConfigController(IConfigService configService,
                                            IRootFolderService rootFolderService,
                                            IRootFolderRepository rootFolderRepository,
+                                           IEventAggregator eventAggregator,
                                            FolderChmodValidator folderChmodValidator)
             : base(configService)
         {
             _rootFolderService = rootFolderService;
             _rootFolderRepository = rootFolderRepository;
+            _eventAggregator = eventAggregator;
 
             SharedValidator.RuleFor(c => c.RecycleBinCleanupDays).GreaterThanOrEqualTo(0);
             SharedValidator.RuleFor(c => c.ChmodFolder).SetValidator(folderChmodValidator).When(c => !string.IsNullOrEmpty(c.ChmodFolder) && (OsInfo.IsLinux || OsInfo.IsOsx));
@@ -67,6 +72,11 @@ namespace Sonarr.Api.V3.Config
 
             _configService.SaveConfigDictionary(configValues, (connection, transaction) =>
                 _rootFolderRepository.UpdateRecycleBinEnabled(models, connection, transaction));
+
+            foreach (var rootFolder in models)
+            {
+                _eventAggregator.PublishEvent(new ModelEvent<RootFolder>(rootFolder, ModelAction.Updated));
+            }
 
             return Accepted(resource.Id);
         }
