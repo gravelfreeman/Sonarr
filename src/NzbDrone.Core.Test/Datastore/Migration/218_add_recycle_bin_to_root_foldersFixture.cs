@@ -25,6 +25,21 @@ namespace NzbDrone.Core.Test.Datastore.Migration
         }
 
         [Test]
+        public void should_enable_recycle_bin_for_existing_root_folders()
+        {
+            var db = WithMigrationTestDb(c =>
+            {
+                c.Insert.IntoTable("RootFolders").Row(new
+                {
+                    Path = "/media/tv"
+                });
+            });
+
+            db.QueryScalar<int>("SELECT \"RecycleBinEnabled\" FROM \"RootFolders\" WHERE \"Path\" = '/media/tv'")
+              .Should().Be(1);
+        }
+
+        [Test]
         public void should_not_enable_recycle_bin_when_legacy_path_is_missing()
         {
             var db = WithMigrationTestDb();
