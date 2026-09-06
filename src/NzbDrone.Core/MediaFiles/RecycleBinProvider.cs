@@ -18,9 +18,7 @@ namespace NzbDrone.Core.MediaFiles
     {
         void DeleteFolder(string path);
         void DeleteFolder(string path, RecycleBinOperation operation);
-        string DeleteFile(string path);
-        string DeleteFile(string path, string subfolder);
-        string DeleteFile(string path, string subfolder, RecycleBinOperation operation);
+        string DeleteFile(string path, RecycleBinOperation operation = RecycleBinOperation.Delete);
         void Empty();
         void Cleanup();
     }
@@ -89,17 +87,7 @@ namespace NzbDrone.Core.MediaFiles
             }
         }
 
-        public string DeleteFile(string path)
-        {
-            return DeleteFile(path, string.Empty, RecycleBinOperation.Delete);
-        }
-
-        public string DeleteFile(string path, string subfolder)
-        {
-            return DeleteFile(path, subfolder, RecycleBinOperation.Delete);
-        }
-
-        public string DeleteFile(string path, string subfolder, RecycleBinOperation operation)
+        public string DeleteFile(string path, RecycleBinOperation operation = RecycleBinOperation.Delete)
         {
             _logger.Debug("Attempting to send '{0}' to recycling bin", path);
 

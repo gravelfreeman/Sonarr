@@ -70,8 +70,7 @@ namespace NzbDrone.Core.Extras.Others
 
             if (otherExtraFile != null)
             {
-                var subfolder = Path.GetDirectoryName(relativePath);
-                _recycleBinProvider.DeleteFile(path, subfolder);
+                _recycleBinProvider.DeleteFile(path);
             }
         }
     }

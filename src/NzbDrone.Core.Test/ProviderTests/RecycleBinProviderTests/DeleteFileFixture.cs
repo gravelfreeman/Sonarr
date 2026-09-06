@@ -82,18 +82,6 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
         }
 
         [Test]
-        public void should_use_subfolder_when_passed_in()
-        {
-            WithRecycleBin();
-
-            var path = @"/media/library/tv/30 Rock/S01E01.avi".AsOsAgnostic();
-
-            Mocker.Resolve<RecycleBinProvider>().DeleteFile(path, "30 Rock");
-
-            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(path, RecycleBinPathBuilder.GetRecycleBinDestination(path), TransferMode.Move, false), Times.Once());
-        }
-
-        [Test]
         public void should_delete_permanently_when_root_folder_recycle_bin_is_disabled()
         {
             WithRecycleBin();
@@ -117,7 +105,7 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
 
             var path = @"/media/library/tv/30 Rock/S01E01.avi".AsOsAgnostic();
 
-            Mocker.Resolve<RecycleBinProvider>().DeleteFile(path, string.Empty, RecycleBinOperation.Delete);
+            Mocker.Resolve<RecycleBinProvider>().DeleteFile(path, RecycleBinOperation.Delete);
 
             Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFile(path), Times.Once());
             Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(It.IsAny<string>(), It.IsAny<string>(), TransferMode.Move, false), Times.Never());
