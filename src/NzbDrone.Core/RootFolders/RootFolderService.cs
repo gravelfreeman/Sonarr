@@ -211,12 +211,12 @@ namespace NzbDrone.Core.RootFolders
 
         public string GetBestRootFolderPath(string path)
         {
-            return GetBestRootFolderPath(path, null);
+            return _cache.Get(path, () => GetBestRootFolderPathInternal(path), TimeSpan.FromDays(1));
         }
 
         public string GetBestRootFolderPath(string path, List<RootFolder> rootFolders)
         {
-            return _cache.Get(path, () => GetBestRootFolderPathInternal(path, rootFolders), TimeSpan.FromDays(1));
+            return GetBestRootFolderPathInternal(path, rootFolders);
         }
 
         private void GetDetails(RootFolder rootFolder, Dictionary<int, string> seriesPaths, bool timeout)
