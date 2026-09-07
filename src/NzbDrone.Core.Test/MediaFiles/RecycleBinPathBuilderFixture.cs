@@ -45,6 +45,14 @@ namespace NzbDrone.Core.Test.MediaFiles
         }
 
         [Test]
+        public void should_reject_path_outside_mount_point()
+        {
+            PosixOnly();
+
+            RecycleBinPathBuilder.GetRecycleBinDestination("/srv/tv/episode.mkv", "/mnt/storage").Should().BeNull();
+        }
+
+        [Test]
         public void should_preserve_windows_drive_structure()
         {
             WindowsOnly();

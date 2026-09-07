@@ -27,7 +27,7 @@ namespace NzbDrone.Core.MediaFiles
             var fullMountPath = Path.GetFullPath(mountPath);
             var relativePath = Path.GetRelativePath(fullMountPath, Path.GetFullPath(path));
 
-            if (relativePath.IsNullOrWhiteSpace())
+            if (relativePath.IsNullOrWhiteSpace() || IsOutsideMount(relativePath))
             {
                 return null;
             }
@@ -40,6 +40,14 @@ namespace NzbDrone.Core.MediaFiles
             }
 
             return Path.Combine(recyclingBin, relativePath);
+        }
+
+        private static bool IsOutsideMount(string relativePath)
+        {
+            return Path.IsPathRooted(relativePath) ||
+                   relativePath == ".." ||
+                   relativePath.StartsWith(".." + Path.DirectorySeparatorChar) ||
+                   relativePath.StartsWith(".." + Path.AltDirectorySeparatorChar);
         }
     }
 }
