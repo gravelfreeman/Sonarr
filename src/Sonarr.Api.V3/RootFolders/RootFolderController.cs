@@ -29,7 +29,7 @@ namespace Sonarr.Api.V3.RootFolders
         {
             _rootFolderService = rootFolderService;
 
-            PostValidator.RuleFor(c => c.Path)
+            SharedValidator.RuleFor(c => c.Path)
                 .Cascade(CascadeMode.Stop)
                 .IsValidPath()
                            .SetValidator(rootFolderValidator)

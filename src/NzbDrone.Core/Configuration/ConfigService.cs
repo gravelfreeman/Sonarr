@@ -64,7 +64,9 @@ namespace NzbDrone.Core.Configuration
                     continue;
                 }
 
-                if (!configValue.Value.ToString().Equals(currentValue.ToString()))
+                var equal = configValue.Value.ToString().Equals(currentValue.ToString());
+
+                if (!equal)
                 {
                     SetValue(configValue.Key, configValue.Value.ToString());
                 }
