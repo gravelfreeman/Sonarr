@@ -229,14 +229,7 @@ namespace NzbDrone.Core.MediaFiles
                         continue;
                     }
 
-                    try
-                    {
-                        _diskProvider.DeleteFile(file);
-                    }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        _logger.Error(ex.Message);
-                    }
+                    _diskProvider.DeleteFile(file);
                 }
 
                 _diskProvider.RemoveEmptySubfolders(recycleBin);
