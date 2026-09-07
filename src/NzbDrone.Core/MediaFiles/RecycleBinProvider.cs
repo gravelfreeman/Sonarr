@@ -53,7 +53,9 @@ namespace NzbDrone.Core.MediaFiles
         {
             _logger.Info("Attempting to send '{0}' to recycling bin", path);
 
-            if (!ShouldUseRecycleBin(path, operation))
+            var rootFolder = GetRecycleBinRootFolder(path, operation);
+
+            if (rootFolder == null)
             {
                 _logger.Info("Recycling Bin is disabled, deleting permanently. {0}", path);
                 _diskProvider.DeleteFolder(path, true);
@@ -61,7 +63,7 @@ namespace NzbDrone.Core.MediaFiles
             }
             else
             {
-                var destination = GetRecycleBinDestination(path);
+                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path);
 
                 if (destination.IsNullOrWhiteSpace())
                 {
@@ -91,7 +93,9 @@ namespace NzbDrone.Core.MediaFiles
         {
             _logger.Debug("Attempting to send '{0}' to recycling bin", path);
 
-            if (!ShouldUseRecycleBin(path, operation))
+            var rootFolder = GetRecycleBinRootFolder(path, operation);
+
+            if (rootFolder == null)
             {
                 _logger.Info("Recycling Bin is disabled, deleting permanently. {0}", path);
 
@@ -108,7 +112,7 @@ namespace NzbDrone.Core.MediaFiles
             else
             {
                 var fileInfo = new FileInfo(path);
-                var destination = GetRecycleBinDestination(path);
+                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path);
 
                 if (destination.IsNullOrWhiteSpace())
                 {
@@ -241,48 +245,26 @@ namespace NzbDrone.Core.MediaFiles
             _logger.Debug("Recycling Bin has been cleaned up.");
         }
 
-        private string GetRecycleBin(string path)
-        {
-            var rootFolder = _rootFolderService.GetBestRootFolder(path);
-
-            if (rootFolder == null)
-            {
-                return null;
-            }
-
-            return RecycleBinPathBuilder.GetRecycleBinPath(path);
-        }
-
-        private string GetRecycleBinDestination(string path)
-        {
-            if (GetRecycleBin(path).IsNullOrWhiteSpace())
-            {
-                return null;
-            }
-
-            return RecycleBinPathBuilder.GetRecycleBinDestination(path);
-        }
-
-        private bool ShouldUseRecycleBin(string path, RecycleBinOperation operation)
+        private RootFolder GetRecycleBinRootFolder(string path, RecycleBinOperation operation)
         {
             if (!_configService.RecycleBinEnabled)
             {
-                return false;
+                return null;
             }
 
             var rootFolder = _rootFolderService.GetBestRootFolder(path);
 
             if (rootFolder?.RecycleBinEnabled != true)
             {
-                return false;
+                return null;
             }
 
             return _configService.RecycleBinMode switch
             {
-                RecycleBinMode.Both => true,
-                RecycleBinMode.UpgradesOnly => operation == RecycleBinOperation.Upgrade,
-                RecycleBinMode.DeletesOnly => operation == RecycleBinOperation.Delete,
-                _ => true
+                RecycleBinMode.Both => rootFolder,
+                RecycleBinMode.UpgradesOnly => operation == RecycleBinOperation.Upgrade ? rootFolder : null,
+                RecycleBinMode.DeletesOnly => operation == RecycleBinOperation.Delete ? rootFolder : null,
+                _ => rootFolder
             };
         }
 

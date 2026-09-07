@@ -50,6 +50,7 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
 
             Mocker.GetMock<IDiskTransferService>()
                   .Verify(v => v.TransferFolder(path, RecycleBinPathBuilder.GetRecycleBinDestination(path), TransferMode.Move), Times.Once());
+            Mocker.GetMock<IRootFolderService>().Verify(v => v.GetBestRootFolder(path), Times.Once());
         }
 
         [Test]
