@@ -135,17 +135,17 @@ class MediaManagement extends Component {
       hasSettings,
       isWindows,
       onInputChange,
+      onSavePress,
       pendingChanges,
       ...otherProps
     } = this.props;
-    delete otherProps.onSavePress;
 
     return (
       <PageContent title={translate('MediaManagementSettings')}>
         <SettingsToolbarConnector
           advancedSettings={advancedSettings}
           {...otherProps}
-          onSavePress={this.props.onSavePress}
+          onSavePress={onSavePress}
         />
 
         <PageContentBody>
