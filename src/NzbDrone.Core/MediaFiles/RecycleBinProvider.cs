@@ -63,7 +63,7 @@ namespace NzbDrone.Core.MediaFiles
             }
             else
             {
-                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path);
+                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path, rootFolder.Path);
 
                 if (destination.IsNullOrWhiteSpace())
                 {
@@ -112,7 +112,7 @@ namespace NzbDrone.Core.MediaFiles
             else
             {
                 var fileInfo = new FileInfo(path);
-                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path);
+                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path, rootFolder.Path);
 
                 if (destination.IsNullOrWhiteSpace())
                 {

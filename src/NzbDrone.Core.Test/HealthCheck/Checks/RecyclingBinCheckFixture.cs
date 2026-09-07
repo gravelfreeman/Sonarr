@@ -53,6 +53,25 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
         }
 
         [Test]
+        public void should_check_volume_root_when_shared_bin_does_not_exist()
+        {
+            PosixOnly();
+
+            Mocker.GetMock<IRootFolderService>().Setup(s => s.All()).Returns(new List<RootFolder>
+            {
+                new RootFolder { Path = "/", RecycleBinEnabled = true }
+            });
+
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderExists("/.bin")).Returns(false);
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderWritable("/")).Returns(true);
+
+            Subject.Check().ShouldBeOk();
+
+            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable("/"), Times.Once());
+            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable("/.bin"), Times.Never());
+        }
+
+        [Test]
         public void should_ignore_disabled_root_folders()
         {
             PosixOnly();

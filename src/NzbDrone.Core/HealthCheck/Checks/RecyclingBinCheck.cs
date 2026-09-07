@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using NzbDrone.Common;
 using NzbDrone.Common.Disk;
@@ -45,7 +46,7 @@ namespace NzbDrone.Core.HealthCheck.Checks
 
             foreach (var recycleBin in recycleBins)
             {
-                var topLevelFolder = RecycleBinPathBuilder.GetTopLevelFolder(recycleBin);
+                var topLevelFolder = Path.GetDirectoryName(recycleBin);
                 var folderToCheck = _diskProvider.FolderExists(recycleBin) ? recycleBin : topLevelFolder;
 
                 if (!_diskProvider.FolderWritable(folderToCheck))

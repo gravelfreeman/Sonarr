@@ -54,6 +54,22 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
         }
 
         [Test]
+        public void should_use_move_when_root_folder_is_volume_root()
+        {
+            PosixOnly();
+            WithRecycleBin();
+            Mocker.GetMock<IRootFolderService>()
+                  .Setup(s => s.GetBestRootFolder(It.IsAny<string>()))
+                  .Returns(new RootFolder { Path = "/", RecycleBinEnabled = true });
+
+            var path = "/episode.mkv";
+
+            Mocker.Resolve<RecycleBinProvider>().DeleteFile(path);
+
+            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(path, "/.bin/episode.mkv", TransferMode.Move, false), Times.Once());
+        }
+
+        [Test]
         public void should_use_alternative_name_if_already_exists()
         {
             WithRecycleBin();

@@ -35,10 +35,25 @@ namespace NzbDrone.Core.MediaFiles
 
         public static string GetRecycleBinDestination(string path)
         {
-            var recyclingBin = GetRecycleBinPath(path);
-            var relativePath = GetPathRelativeToTopLevelFolder(path);
+            return BuildRecycleBinDestination(path, GetTopLevelFolder(path));
+        }
 
-            if (recyclingBin.IsNullOrWhiteSpace() || relativePath.IsNullOrWhiteSpace())
+        public static string GetRecycleBinDestination(string path, string rootFolderPath)
+        {
+            return BuildRecycleBinDestination(path, GetTopLevelFolder(rootFolderPath));
+        }
+
+        private static string BuildRecycleBinDestination(string path, string topLevelFolder)
+        {
+            if (topLevelFolder.IsNullOrWhiteSpace())
+            {
+                return null;
+            }
+
+            var recyclingBin = Path.Combine(topLevelFolder, RecycleBinFolder);
+            var relativePath = Path.GetRelativePath(topLevelFolder, Path.GetFullPath(path));
+
+            if (relativePath.IsNullOrWhiteSpace())
             {
                 return null;
             }
@@ -67,6 +82,12 @@ namespace NzbDrone.Core.MediaFiles
             }
 
             var relativePath = Path.GetRelativePath(pathRoot, fullPath);
+
+            if (relativePath == ".")
+            {
+                return pathRoot;
+            }
+
             var topLevelFolderName = relativePath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries)
                                                  .FirstOrDefault();
 
