@@ -6,19 +6,17 @@
     "dockerfile": "Dockerfile"
   },
   "mounts": [
-    "source=${localEnv:HOME}/.cache/sonarr-devcontainer/ssh-agent.sock,target=/tmp/ssh-agent.sock,type=bind",
     "source=${localEnv:HOME}/.codex,target=/home/vscode/.codex,type=bind",
     "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig-host,type=bind,readonly",
-    "source=${localEnv:HOME}/.1password/agent.sock,target=/home/vscode/.1password/agent.sock,type=bind",
+    "source=${localEnv:HOME}/.1password,target=/home/vscode/.1password,type=bind",
     "source=/opt/1Password/op-ssh-sign,target=/opt/1Password/op-ssh-sign,type=bind,readonly"
   ],
   "containerEnv": {
-    "SSH_AUTH_SOCK": "/tmp/ssh-agent.sock",
+    "SSH_AUTH_SOCK": "/home/vscode/.1password/agent.sock",
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
     "DOTNET_NOLOGO": "1",
     "NUGET_XMLDOC_MODE": "skip"
   },
-  "initializeCommand": "bash ${localWorkspaceFolder}/.devcontainer/initializeCommand.sh",
   "postCreateCommand": "bash ${containerWorkspaceFolder}/.devcontainer/postCreateCommand.sh ${containerWorkspaceFolder}",
   "features": {
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
