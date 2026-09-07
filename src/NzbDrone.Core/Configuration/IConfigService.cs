@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using System;
-using System.Data;
 using NzbDrone.Common.Http.Proxy;
 using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.MediaFiles;
@@ -13,7 +11,6 @@ namespace NzbDrone.Core.Configuration
     public interface IConfigService
     {
         void SaveConfigDictionary(Dictionary<string, object> configValues);
-        void SaveConfigDictionary(Dictionary<string, object> configValues, Action<IDbConnection, IDbTransaction> transactionAction);
 
         bool IsDefined(string key);
 

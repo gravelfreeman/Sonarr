@@ -6,8 +6,6 @@ using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Core.Configuration;
-using NzbDrone.Core.Datastore.Events;
-using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.RootFolders;
 using NzbDrone.Core.Validation;
 using NzbDrone.Core.Validation.Paths;
@@ -20,18 +18,15 @@ namespace Sonarr.Api.V3.Config
     {
         private readonly IRootFolderService _rootFolderService;
         private readonly IRootFolderRepository _rootFolderRepository;
-        private readonly IEventAggregator _eventAggregator;
 
         public MediaManagementConfigController(IConfigService configService,
                                            IRootFolderService rootFolderService,
                                            IRootFolderRepository rootFolderRepository,
-                                           IEventAggregator eventAggregator,
                                            FolderChmodValidator folderChmodValidator)
             : base(configService)
         {
             _rootFolderService = rootFolderService;
             _rootFolderRepository = rootFolderRepository;
-            _eventAggregator = eventAggregator;
 
             SharedValidator.RuleFor(c => c.RecycleBinCleanupDays).GreaterThanOrEqualTo(0);
             SharedValidator.RuleFor(c => c.ChmodFolder).SetValidator(folderChmodValidator).When(c => !string.IsNullOrEmpty(c.ChmodFolder) && (OsInfo.IsLinux || OsInfo.IsOsx));
@@ -70,12 +65,11 @@ namespace Sonarr.Api.V3.Config
                 .Where(x => x.Name != nameof(MediaManagementConfigResource.RootFolderUpdates))
                 .ToDictionary(prop => prop.Name, prop => prop.GetValue(resource, null));
 
-            _configService.SaveConfigDictionary(configValues, (connection, transaction) =>
-                _rootFolderRepository.UpdateRecycleBinEnabled(models, connection, transaction));
+            _configService.SaveConfigDictionary(configValues);
 
-            foreach (var rootFolder in models)
+            if (models.Any())
             {
-                _eventAggregator.PublishEvent(new ModelEvent<RootFolder>(rootFolder, ModelAction.Updated));
+                _rootFolderRepository.SetFields(models, x => x.RecycleBinEnabled);
             }
 
             return Accepted(resource.Id);
