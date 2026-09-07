@@ -28,7 +28,6 @@ function createSaveHandler(section, url) {
           pendingChanges: {}
         })
       ]));
-
     });
 
     promise.fail((xhr) => {
