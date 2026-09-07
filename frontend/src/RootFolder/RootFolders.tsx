@@ -38,6 +38,10 @@ const rootFolderColumns = [
   },
 ];
 
+const rootFolderColumnsWithoutRecycleBin = rootFolderColumns.filter(
+  (column) => column.name !== 'recycleBinEnabled'
+);
+
 type RootFolderUpdate = {
   id: number;
   recycleBinEnabled: boolean;
@@ -96,7 +100,11 @@ function RootFolders(props: RootFoldersProps) {
   }
 
   return (
-    <Table columns={rootFolderColumns}>
+    <Table
+      columns={
+        onInputChange ? rootFolderColumns : rootFolderColumnsWithoutRecycleBin
+      }
+    >
       <TableBody>
         {items.map((rootFolder) => {
           return (
@@ -111,7 +119,9 @@ function RootFolders(props: RootFoldersProps) {
               accessible={rootFolder.accessible}
               freeSpace={rootFolder.freeSpace}
               unmappedFolders={rootFolder.unmappedFolders}
-              onRecycleBinChange={onRecycleBinChange}
+              onRecycleBinChange={
+                onInputChange ? onRecycleBinChange : undefined
+              }
             />
           );
         })}

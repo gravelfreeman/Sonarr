@@ -90,13 +90,15 @@ function RootFolderRow(props: RootFolderRowProps) {
         {isUnavailable ? '-' : unmappedFolders.length}
       </TableRowCell>
 
-      <TableRowCell className={styles.recycleBinEnabled}>
-        <CheckInput
-          name={`recycleBinEnabled-${id}`}
-          value={recycleBinEnabled}
-          onChange={onRecycleBinEnabledInputChange}
-        />
-      </TableRowCell>
+      {onRecycleBinChange ? (
+        <TableRowCell className={styles.recycleBinEnabled}>
+          <CheckInput
+            name={`recycleBinEnabled-${id}`}
+            value={recycleBinEnabled}
+            onChange={onRecycleBinEnabledInputChange}
+          />
+        </TableRowCell>
+      ) : null}
 
       <TableRowCell className={styles.actions}>
         <IconButton
