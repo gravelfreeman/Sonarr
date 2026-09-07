@@ -14,7 +14,7 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
     public class EmptyFixture : CoreTest
     {
         private const string RootFolder = @"/media/library/tv";
-        private readonly string _recycleBin = RecycleBinPathBuilder.GetRecycleBinDestination(RootFolder);
+        private readonly string _recycleBin = RecycleBinPathBuilder.GetRecycleBinDestination(RootFolder, "/media");
 
         [SetUp]
         public void Setup()
@@ -24,6 +24,9 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
             {
                 new RootFolder { Path = RootFolder, RecycleBinEnabled = true }
             }.ToList());
+            var mount = new Mock<IMount>();
+            mount.SetupGet(s => s.RootDirectory).Returns("/media");
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.GetMount(It.IsAny<string>())).Returns(mount.Object);
             Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderExists(_recycleBin)).Returns(true);
 
             Mocker.GetMock<IDiskProvider>().Setup(s => s.GetDirectories(_recycleBin))

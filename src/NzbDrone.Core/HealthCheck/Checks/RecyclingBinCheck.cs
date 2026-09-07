@@ -40,7 +40,9 @@ namespace NzbDrone.Core.HealthCheck.Checks
 
             var recycleBins = _rootFolderService.All()
                                                 .Where(r => r.RecycleBinEnabled)
-                                                .Select(r => RecycleBinPathBuilder.GetRecycleBinPath(r.Path))
+                                                .Select(r => _diskProvider.GetMount(r.Path)?.RootDirectory)
+                                                .Where(r => r.IsNotNullOrWhiteSpace())
+                                                .Select(RecycleBinPathBuilder.GetRecycleBinPath)
                                                 .Where(r => r.IsNotNullOrWhiteSpace())
                                                 .Distinct(PathEqualityComparer.Instance);
 

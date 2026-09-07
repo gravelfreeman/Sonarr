@@ -21,6 +21,9 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
             Mocker.GetMock<IRootFolderService>()
                   .Setup(s => s.GetBestRootFolder(It.IsAny<string>()))
                   .Returns(new RootFolder { Path = @"/media/library/tv".AsOsAgnostic(), RecycleBinEnabled = true });
+            var mount = new Mock<IMount>();
+            mount.SetupGet(s => s.RootDirectory).Returns("/media");
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.GetMount(It.IsAny<string>())).Returns(mount.Object);
         }
 
         [TestCase(false, true, RecycleBinMode.Both)]
@@ -51,7 +54,7 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
 
             Mocker.Resolve<RecycleBinProvider>().DeleteFile(path);
 
-            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(path, RecycleBinPathBuilder.GetRecycleBinDestination(path), TransferMode.Move, false), Times.Once());
+            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(path, RecycleBinPathBuilder.GetRecycleBinDestination(path, "/media"), TransferMode.Move, false), Times.Once());
             Mocker.GetMock<IRootFolderService>().Verify(v => v.GetBestRootFolder(path), Times.Once());
         }
 
@@ -63,6 +66,9 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
             Mocker.GetMock<IRootFolderService>()
                   .Setup(s => s.GetBestRootFolder(It.IsAny<string>()))
                   .Returns(new RootFolder { Path = "/", RecycleBinEnabled = true });
+            var mount = new Mock<IMount>();
+            mount.SetupGet(s => s.RootDirectory).Returns("/");
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.GetMount(It.IsAny<string>())).Returns(mount.Object);
 
             var path = "/episode.mkv";
 
@@ -72,12 +78,31 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
         }
 
         [Test]
+        public void should_use_actual_mount_point_for_nested_mount()
+        {
+            PosixOnly();
+            WithRecycleBin();
+            Mocker.GetMock<IRootFolderService>()
+                  .Setup(s => s.GetBestRootFolder(It.IsAny<string>()))
+                  .Returns(new RootFolder { Path = "/mnt/media/tv", RecycleBinEnabled = true });
+            var mount = new Mock<IMount>();
+            mount.SetupGet(s => s.RootDirectory).Returns("/mnt/media");
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.GetMount(It.IsAny<string>())).Returns(mount.Object);
+
+            var path = "/mnt/media/tv/episode.mkv";
+
+            Mocker.Resolve<RecycleBinProvider>().DeleteFile(path);
+
+            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(path, "/mnt/media/.bin/tv/episode.mkv", TransferMode.Move, false), Times.Once());
+        }
+
+        [Test]
         public void should_use_alternative_name_if_already_exists()
         {
             WithRecycleBin();
 
             var path = @"/media/library/tv/30 Rock/S01E01.avi".AsOsAgnostic();
-            var recycleBinPath = RecycleBinPathBuilder.GetRecycleBinDestination(path);
+            var recycleBinPath = RecycleBinPathBuilder.GetRecycleBinDestination(path, "/media");
 
             Mocker.GetMock<IDiskProvider>()
                 .Setup(v => v.FileExists(recycleBinPath))
@@ -97,7 +122,7 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
 
             Mocker.Resolve<RecycleBinProvider>().DeleteFile(path);
 
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.FileSetLastWriteTime(RecycleBinPathBuilder.GetRecycleBinDestination(path), It.IsAny<DateTime>()), Times.Once());
+            Mocker.GetMock<IDiskProvider>().Verify(v => v.FileSetLastWriteTime(RecycleBinPathBuilder.GetRecycleBinDestination(path, "/media"), It.IsAny<DateTime>()), Times.Once());
         }
     }
 }

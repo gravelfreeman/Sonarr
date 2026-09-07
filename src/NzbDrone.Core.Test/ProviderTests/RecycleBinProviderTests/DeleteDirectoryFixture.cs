@@ -20,6 +20,9 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
             Mocker.GetMock<IRootFolderService>()
                   .Setup(s => s.GetBestRootFolder(It.IsAny<string>()))
                   .Returns(new RootFolder { Path = @"/media/library/tv".AsOsAgnostic(), RecycleBinEnabled = true });
+            var mount = new Mock<IMount>();
+            mount.SetupGet(s => s.RootDirectory).Returns("/media");
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.GetMount(It.IsAny<string>())).Returns(mount.Object);
         }
 
         private void WithoutRecycleBin()
@@ -49,7 +52,7 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
             Mocker.Resolve<RecycleBinProvider>().DeleteFolder(path);
 
             Mocker.GetMock<IDiskTransferService>()
-                  .Verify(v => v.TransferFolder(path, RecycleBinPathBuilder.GetRecycleBinDestination(path), TransferMode.Move), Times.Once());
+                  .Verify(v => v.TransferFolder(path, RecycleBinPathBuilder.GetRecycleBinDestination(path, "/media"), TransferMode.Move), Times.Once());
             Mocker.GetMock<IRootFolderService>().Verify(v => v.GetBestRootFolder(path), Times.Once());
         }
 
@@ -62,7 +65,7 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
 
             Mocker.Resolve<RecycleBinProvider>().DeleteFolder(path);
 
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderSetLastWriteTime(RecycleBinPathBuilder.GetRecycleBinDestination(path), It.IsAny<DateTime>()), Times.Once());
+            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderSetLastWriteTime(RecycleBinPathBuilder.GetRecycleBinDestination(path, "/media"), It.IsAny<DateTime>()), Times.Once());
         }
 
         [Test]
@@ -72,7 +75,7 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
             WithRecycleBin();
             var path = @"/media/library/tv/30 Rock".AsOsAgnostic();
 
-            Mocker.GetMock<IDiskProvider>().Setup(s => s.GetFiles(RecycleBinPathBuilder.GetRecycleBinDestination(path), true))
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.GetFiles(RecycleBinPathBuilder.GetRecycleBinDestination(path, "/media"), true))
                                            .Returns(new[] { "File1", "File2", "File3" });
 
             Mocker.Resolve<RecycleBinProvider>().DeleteFolder(path);

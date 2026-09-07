@@ -22,6 +22,13 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
                   .Returns("Some Error Message");
         }
 
+        private void GivenMount(string path)
+        {
+            var mount = new Mock<IMount>();
+            mount.SetupGet(s => s.RootDirectory).Returns(path);
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.GetMount(It.IsAny<string>())).Returns(mount.Object);
+        }
+
         [TestCase(false, true)]
         [TestCase(true, false)]
         public void should_not_check_paths_when_recycle_bin_is_disabled(bool recycleBinEnabled, bool rootFolderRecycleBinEnabled)
@@ -47,6 +54,7 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
                 new RootFolder { Path = "/media/library/tv/hd", RecycleBinEnabled = true },
                 new RootFolder { Path = "/media/library/tv/sd", RecycleBinEnabled = true }
             });
+            GivenMount("/media");
 
             Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderExists("/media/.bin")).Returns(false);
             Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderWritable("/media")).Returns(true);
@@ -66,6 +74,7 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
             {
                 new RootFolder { Path = "/", RecycleBinEnabled = true }
             });
+            GivenMount("/");
 
             Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderExists("/.bin")).Returns(false);
             Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderWritable("/")).Returns(true);

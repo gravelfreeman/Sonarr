@@ -1,6 +1,4 @@
-using System;
 using System.IO;
-using System.Linq;
 using NzbDrone.Common.Extensions;
 
 namespace NzbDrone.Core.MediaFiles
@@ -9,54 +7,32 @@ namespace NzbDrone.Core.MediaFiles
     {
         public const string RecycleBinFolder = ".bin";
 
-        public static string GetRecycleBinPath(string path)
+        public static string GetRecycleBinPath(string mountPath)
         {
-            var topLevelFolder = GetTopLevelFolder(path);
-
-            if (topLevelFolder.IsNullOrWhiteSpace())
+            if (mountPath.IsNullOrWhiteSpace())
             {
                 return null;
             }
 
-            return Path.Combine(topLevelFolder, RecycleBinFolder);
+            return Path.Combine(Path.GetFullPath(mountPath), RecycleBinFolder);
         }
 
-        public static string GetPathRelativeToTopLevelFolder(string path)
+        public static string GetRecycleBinDestination(string path, string mountPath)
         {
-            var topLevelFolder = GetTopLevelFolder(path);
-
-            if (topLevelFolder.IsNullOrWhiteSpace())
+            if (path.IsNullOrWhiteSpace() || mountPath.IsNullOrWhiteSpace())
             {
                 return null;
             }
 
-            return Path.GetRelativePath(topLevelFolder, Path.GetFullPath(path));
-        }
-
-        public static string GetRecycleBinDestination(string path)
-        {
-            return BuildRecycleBinDestination(path, GetTopLevelFolder(path));
-        }
-
-        public static string GetRecycleBinDestination(string path, string rootFolderPath)
-        {
-            return BuildRecycleBinDestination(path, GetTopLevelFolder(rootFolderPath));
-        }
-
-        private static string BuildRecycleBinDestination(string path, string topLevelFolder)
-        {
-            if (topLevelFolder.IsNullOrWhiteSpace())
-            {
-                return null;
-            }
-
-            var recyclingBin = Path.Combine(topLevelFolder, RecycleBinFolder);
-            var relativePath = Path.GetRelativePath(topLevelFolder, Path.GetFullPath(path));
+            var fullMountPath = Path.GetFullPath(mountPath);
+            var relativePath = Path.GetRelativePath(fullMountPath, Path.GetFullPath(path));
 
             if (relativePath.IsNullOrWhiteSpace())
             {
                 return null;
             }
+
+            var recyclingBin = GetRecycleBinPath(fullMountPath);
 
             if (relativePath == ".")
             {
@@ -64,39 +40,6 @@ namespace NzbDrone.Core.MediaFiles
             }
 
             return Path.Combine(recyclingBin, relativePath);
-        }
-
-        public static string GetTopLevelFolder(string path)
-        {
-            if (path.IsNullOrWhiteSpace())
-            {
-                return null;
-            }
-
-            var fullPath = Path.GetFullPath(path);
-            var pathRoot = Path.GetPathRoot(fullPath);
-
-            if (pathRoot.IsNullOrWhiteSpace())
-            {
-                return null;
-            }
-
-            var relativePath = Path.GetRelativePath(pathRoot, fullPath);
-
-            if (relativePath == ".")
-            {
-                return pathRoot;
-            }
-
-            var topLevelFolderName = relativePath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries)
-                                                 .FirstOrDefault();
-
-            if (topLevelFolderName.IsNullOrWhiteSpace() || topLevelFolderName == "." || topLevelFolderName == "..")
-            {
-                return null;
-            }
-
-            return Path.Combine(pathRoot, topLevelFolderName);
         }
     }
 }

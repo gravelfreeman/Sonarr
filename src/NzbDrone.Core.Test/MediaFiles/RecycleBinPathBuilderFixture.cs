@@ -13,14 +13,14 @@ namespace NzbDrone.Core.Test.MediaFiles
         {
             var path = @"/media/library/tv/30 Rock/S01E01.avi";
 
-            RecycleBinPathBuilder.GetRecycleBinPath(path).Should().Be("/media/.bin");
-            RecycleBinPathBuilder.GetRecycleBinDestination(path).Should().Be("/media/.bin/library/tv/30 Rock/S01E01.avi");
+            RecycleBinPathBuilder.GetRecycleBinPath("/media").Should().Be("/media/.bin");
+            RecycleBinPathBuilder.GetRecycleBinDestination(path, "/media").Should().Be("/media/.bin/library/tv/30 Rock/S01E01.avi");
         }
 
         [Test]
         public void should_return_null_for_empty_path()
         {
-            RecycleBinPathBuilder.GetRecycleBinDestination(string.Empty).Should().BeNull();
+            RecycleBinPathBuilder.GetRecycleBinDestination(string.Empty, "/media").Should().BeNull();
         }
 
         [Test]
@@ -29,8 +29,19 @@ namespace NzbDrone.Core.Test.MediaFiles
             PosixOnly();
 
             RecycleBinPathBuilder.GetRecycleBinPath("/").Should().Be("/.bin");
-            RecycleBinPathBuilder.GetRecycleBinDestination("/").Should().Be("/.bin");
+            RecycleBinPathBuilder.GetRecycleBinDestination("/", "/").Should().Be("/.bin");
             RecycleBinPathBuilder.GetRecycleBinDestination("/episode.mkv", "/").Should().Be("/.bin/episode.mkv");
+        }
+
+        [Test]
+        public void should_use_nested_mount_point_instead_of_first_path_segment()
+        {
+            PosixOnly();
+
+            var path = "/mnt/media/tv/30 Rock/S01E01.avi";
+
+            RecycleBinPathBuilder.GetRecycleBinPath("/mnt/media").Should().Be("/mnt/media/.bin");
+            RecycleBinPathBuilder.GetRecycleBinDestination(path, "/mnt/media").Should().Be("/mnt/media/.bin/tv/30 Rock/S01E01.avi");
         }
 
         [Test]
@@ -40,8 +51,8 @@ namespace NzbDrone.Core.Test.MediaFiles
 
             var path = @"C:\media\library\tv\Series\Episode.mkv";
 
-            RecycleBinPathBuilder.GetRecycleBinPath(path).Should().Be(@"C:\media\.bin");
-            RecycleBinPathBuilder.GetRecycleBinDestination(path).Should().Be(@"C:\media\.bin\library\tv\Series\Episode.mkv");
+            RecycleBinPathBuilder.GetRecycleBinPath(@"C:\media").Should().Be(@"C:\media\.bin");
+            RecycleBinPathBuilder.GetRecycleBinDestination(path, @"C:\media").Should().Be(@"C:\media\.bin\library\tv\Series\Episode.mkv");
         }
 
         [Test]
@@ -50,7 +61,7 @@ namespace NzbDrone.Core.Test.MediaFiles
             WindowsOnly();
 
             RecycleBinPathBuilder.GetRecycleBinPath(@"D:\").Should().Be(@"D:\.bin");
-            RecycleBinPathBuilder.GetRecycleBinDestination(@"D:\").Should().Be(@"D:\.bin");
+            RecycleBinPathBuilder.GetRecycleBinDestination(@"D:\", @"D:\").Should().Be(@"D:\.bin");
             RecycleBinPathBuilder.GetRecycleBinDestination(@"D:\Episode.mkv", @"D:\").Should().Be(@"D:\.bin\Episode.mkv");
         }
 
@@ -61,8 +72,8 @@ namespace NzbDrone.Core.Test.MediaFiles
 
             var path = @"\\server\share\library\tv\Series\Episode.mkv";
 
-            RecycleBinPathBuilder.GetRecycleBinPath(path).Should().Be(@"\\server\share\library\.bin");
-            RecycleBinPathBuilder.GetRecycleBinDestination(path).Should().Be(@"\\server\share\library\.bin\tv\Series\Episode.mkv");
+            RecycleBinPathBuilder.GetRecycleBinPath(@"\\server\share\library").Should().Be(@"\\server\share\library\.bin");
+            RecycleBinPathBuilder.GetRecycleBinDestination(path, @"\\server\share\library").Should().Be(@"\\server\share\library\.bin\tv\Series\Episode.mkv");
         }
     }
 }

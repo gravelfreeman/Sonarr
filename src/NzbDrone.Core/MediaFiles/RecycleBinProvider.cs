@@ -63,7 +63,7 @@ namespace NzbDrone.Core.MediaFiles
             }
             else
             {
-                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path, rootFolder.Path);
+                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path, GetRecycleBinMountPath(rootFolder.Path));
 
                 if (destination.IsNullOrWhiteSpace())
                 {
@@ -112,7 +112,7 @@ namespace NzbDrone.Core.MediaFiles
             else
             {
                 var fileInfo = new FileInfo(path);
-                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path, rootFolder.Path);
+                var destination = RecycleBinPathBuilder.GetRecycleBinDestination(path, GetRecycleBinMountPath(rootFolder.Path));
 
                 if (destination.IsNullOrWhiteSpace())
                 {
@@ -271,10 +271,15 @@ namespace NzbDrone.Core.MediaFiles
         private string[] GetRecycleBins()
         {
             return _rootFolderService.All()
-                                     .Select(r => RecycleBinPathBuilder.GetRecycleBinDestination(r.Path))
+                                     .Select(r => RecycleBinPathBuilder.GetRecycleBinDestination(r.Path, GetRecycleBinMountPath(r.Path)))
                                      .Where(r => r.IsNotNullOrWhiteSpace())
                                      .Distinct(PathEqualityComparer.Instance)
                                      .ToArray();
+        }
+
+        private string GetRecycleBinMountPath(string path)
+        {
+            return _diskProvider.GetMount(path)?.RootDirectory;
         }
 
         private void SetLastWriteTime(string file, DateTime dateTime)
