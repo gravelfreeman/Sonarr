@@ -58,42 +58,22 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
             Mocker.GetMock<IRootFolderService>().Verify(v => v.GetBestRootFolder(path), Times.Once());
         }
 
-        [Test]
-        public void should_use_move_when_root_folder_is_volume_root()
+        [TestCase("/", "/", "/episode.mkv", "/.bin/episode.mkv")]
+        [TestCase("/mnt/media/tv", "/mnt/media", "/mnt/media/tv/episode.mkv", "/mnt/media/.bin/tv/episode.mkv")]
+        public void should_use_the_mount_point_for_recycle_bin_destination(string rootFolderPath, string mountPath, string path, string destination)
         {
             PosixOnly();
             WithRecycleBin();
             Mocker.GetMock<IRootFolderService>()
                   .Setup(s => s.GetBestRootFolder(It.IsAny<string>()))
-                  .Returns(new RootFolder { Path = "/", RecycleBinEnabled = true });
+                  .Returns(new RootFolder { Path = rootFolderPath, RecycleBinEnabled = true });
             var mount = new Mock<IMount>();
-            mount.SetupGet(s => s.RootDirectory).Returns("/");
+            mount.SetupGet(s => s.RootDirectory).Returns(mountPath);
             Mocker.GetMock<IDiskProvider>().Setup(s => s.GetMount(It.IsAny<string>())).Returns(mount.Object);
-
-            var path = "/episode.mkv";
 
             Mocker.Resolve<RecycleBinProvider>().DeleteFile(path);
 
-            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(path, "/.bin/episode.mkv", TransferMode.Move, false), Times.Once());
-        }
-
-        [Test]
-        public void should_use_actual_mount_point_for_nested_mount()
-        {
-            PosixOnly();
-            WithRecycleBin();
-            Mocker.GetMock<IRootFolderService>()
-                  .Setup(s => s.GetBestRootFolder(It.IsAny<string>()))
-                  .Returns(new RootFolder { Path = "/mnt/media/tv", RecycleBinEnabled = true });
-            var mount = new Mock<IMount>();
-            mount.SetupGet(s => s.RootDirectory).Returns("/mnt/media");
-            Mocker.GetMock<IDiskProvider>().Setup(s => s.GetMount(It.IsAny<string>())).Returns(mount.Object);
-
-            var path = "/mnt/media/tv/episode.mkv";
-
-            Mocker.Resolve<RecycleBinProvider>().DeleteFile(path);
-
-            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(path, "/mnt/media/.bin/tv/episode.mkv", TransferMode.Move, false), Times.Once());
+            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(path, destination, TransferMode.Move, false), Times.Once());
         }
 
         [Test]

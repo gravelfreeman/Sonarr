@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Disk;
@@ -44,45 +45,21 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
             Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable(It.IsAny<string>()), Times.Never());
         }
 
-        [Test]
-        public void should_check_top_level_folder_when_shared_bin_does_not_exist()
+        [TestCase("/media", "/media/.bin", "/media/library/tv/hd", "/media/library/tv/sd")]
+        [TestCase("/", "/.bin", "/")]
+        public void should_check_mount_when_shared_bin_does_not_exist(string mountPath, string recycleBin, params string[] rootFolderPaths)
         {
             PosixOnly();
 
-            Mocker.GetMock<IRootFolderService>().Setup(s => s.All()).Returns(new List<RootFolder>
-            {
-                new RootFolder { Path = "/media/library/tv/hd", RecycleBinEnabled = true },
-                new RootFolder { Path = "/media/library/tv/sd", RecycleBinEnabled = true }
-            });
-            GivenMount("/media");
-
-            Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderExists("/media/.bin")).Returns(false);
-            Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderWritable("/media")).Returns(true);
+            Mocker.GetMock<IRootFolderService>().Setup(s => s.All()).Returns(rootFolderPaths.Select(path => new RootFolder { Path = path, RecycleBinEnabled = true }).ToList());
+            GivenMount(mountPath);
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderExists(recycleBin)).Returns(false);
+            Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderWritable(mountPath)).Returns(true);
 
             Subject.Check().ShouldBeOk();
 
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable("/media"), Times.Once());
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable("/media/.bin"), Times.Never());
-        }
-
-        [Test]
-        public void should_check_volume_root_when_shared_bin_does_not_exist()
-        {
-            PosixOnly();
-
-            Mocker.GetMock<IRootFolderService>().Setup(s => s.All()).Returns(new List<RootFolder>
-            {
-                new RootFolder { Path = "/", RecycleBinEnabled = true }
-            });
-            GivenMount("/");
-
-            Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderExists("/.bin")).Returns(false);
-            Mocker.GetMock<IDiskProvider>().Setup(s => s.FolderWritable("/")).Returns(true);
-
-            Subject.Check().ShouldBeOk();
-
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable("/"), Times.Once());
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable("/.bin"), Times.Never());
+            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable(mountPath), Times.Once());
+            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable(recycleBin), Times.Never());
         }
     }
 }
