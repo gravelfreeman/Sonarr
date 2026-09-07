@@ -22,10 +22,15 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
                   .Returns("Some Error Message");
         }
 
-        [Test]
-        public void should_not_check_paths_when_recycle_bin_is_disabled()
+        [TestCase(false, true)]
+        [TestCase(true, false)]
+        public void should_not_check_paths_when_recycle_bin_is_disabled(bool recycleBinEnabled, bool rootFolderRecycleBinEnabled)
         {
-            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinEnabled).Returns(false);
+            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinEnabled).Returns(recycleBinEnabled);
+            Mocker.GetMock<IRootFolderService>().Setup(s => s.All()).Returns(new List<RootFolder>
+            {
+                new RootFolder { Path = "/media/library/tv", RecycleBinEnabled = rootFolderRecycleBinEnabled }
+            });
 
             Subject.Check().ShouldBeOk();
 
@@ -71,19 +76,5 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
             Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable("/.bin"), Times.Never());
         }
 
-        [Test]
-        public void should_ignore_disabled_root_folders()
-        {
-            PosixOnly();
-
-            Mocker.GetMock<IRootFolderService>().Setup(s => s.All()).Returns(new List<RootFolder>
-            {
-                new RootFolder { Path = "/media/library/tv", RecycleBinEnabled = false }
-            });
-
-            Subject.Check().ShouldBeOk();
-
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable(It.IsAny<string>()), Times.Never());
-        }
     }
 }

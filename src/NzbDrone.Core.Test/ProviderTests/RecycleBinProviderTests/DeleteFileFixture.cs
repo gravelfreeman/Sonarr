@@ -23,21 +23,23 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
                   .Returns(new RootFolder { Path = @"/media/library/tv".AsOsAgnostic(), RecycleBinEnabled = true });
         }
 
-        private void WithoutRecycleBin()
+        [TestCase(false, true, RecycleBinMode.Both)]
+        [TestCase(true, false, RecycleBinMode.Both)]
+        [TestCase(true, true, RecycleBinMode.UpgradesOnly)]
+        public void should_delete_permanently_when_recycle_bin_does_not_apply(bool recycleBinEnabled, bool rootFolderRecycleBinEnabled, RecycleBinMode recycleBinMode)
         {
-            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinEnabled).Returns(false);
-        }
-
-        [Test]
-        public void should_use_delete_when_recycleBin_is_not_configured()
-        {
-            WithoutRecycleBin();
+            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinEnabled).Returns(recycleBinEnabled);
+            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinMode).Returns(recycleBinMode);
+            Mocker.GetMock<IRootFolderService>()
+                  .Setup(s => s.GetBestRootFolder(It.IsAny<string>()))
+                  .Returns(new RootFolder { Path = @"/media/library/tv".AsOsAgnostic(), RecycleBinEnabled = rootFolderRecycleBinEnabled });
 
             var path = @"/media/library/tv/30 Rock/S01E01.avi".AsOsAgnostic();
 
             Mocker.Resolve<RecycleBinProvider>().DeleteFile(path);
 
             Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFile(path), Times.Once());
+            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(It.IsAny<string>(), It.IsAny<string>(), TransferMode.Move, false), Times.Never());
         }
 
         [Test]
@@ -98,34 +100,5 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
             Mocker.GetMock<IDiskProvider>().Verify(v => v.FileSetLastWriteTime(RecycleBinPathBuilder.GetRecycleBinDestination(path), It.IsAny<DateTime>()), Times.Once());
         }
 
-        [Test]
-        public void should_delete_permanently_when_root_folder_recycle_bin_is_disabled()
-        {
-            WithRecycleBin();
-            Mocker.GetMock<IRootFolderService>()
-                  .Setup(s => s.GetBestRootFolder(It.IsAny<string>()))
-                  .Returns(new RootFolder { RecycleBinEnabled = false });
-
-            var path = @"/media/library/tv/30 Rock/S01E01.avi".AsOsAgnostic();
-
-            Mocker.Resolve<RecycleBinProvider>().DeleteFile(path);
-
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFile(path), Times.Once());
-            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(It.IsAny<string>(), It.IsAny<string>(), TransferMode.Move, false), Times.Never());
-        }
-
-        [Test]
-        public void should_delete_permanently_when_mode_is_upgrades_only()
-        {
-            WithRecycleBin();
-            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinMode).Returns(RecycleBinMode.UpgradesOnly);
-
-            var path = @"/media/library/tv/30 Rock/S01E01.avi".AsOsAgnostic();
-
-            Mocker.Resolve<RecycleBinProvider>().DeleteFile(path, RecycleBinOperation.Delete);
-
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFile(path), Times.Once());
-            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(It.IsAny<string>(), It.IsAny<string>(), TransferMode.Move, false), Times.Never());
-        }
     }
 }

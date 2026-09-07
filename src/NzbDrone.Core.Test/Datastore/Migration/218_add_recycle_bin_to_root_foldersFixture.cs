@@ -39,25 +39,20 @@ namespace NzbDrone.Core.Test.Datastore.Migration
               .Should().Be(1);
         }
 
-        [Test]
-        public void should_not_enable_recycle_bin_when_legacy_path_is_missing()
-        {
-            var db = WithMigrationTestDb();
-
-            db.QueryScalar<string>("SELECT \"Value\" FROM \"Config\" WHERE \"Key\" = 'recyclebinenabled'")
-              .Should().BeNull();
-        }
-
-        [Test]
-        public void should_not_enable_recycle_bin_when_legacy_path_is_empty()
+        [TestCase(null)]
+        [TestCase("")]
+        public void should_not_enable_recycle_bin_when_legacy_path_is_missing_or_empty(string legacyPath)
         {
             var db = WithMigrationTestDb(c =>
             {
-                c.Insert.IntoTable("Config").Row(new
+                if (legacyPath != null)
                 {
-                    Key = "recyclebin",
-                    Value = ""
-                });
+                    c.Insert.IntoTable("Config").Row(new
+                    {
+                        Key = "recyclebin",
+                        Value = legacyPath
+                    });
+                }
             });
 
             db.QueryScalar<string>("SELECT \"Value\" FROM \"Config\" WHERE \"Key\" = 'recyclebinenabled'")

@@ -53,20 +53,12 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
                     .Returns(new[] { @"File1.avi", @"File2.mkv" });
         }
 
-        [Test]
-        public void should_return_if_recycleBin_not_configured()
+        [TestCase(false, 7)]
+        [TestCase(true, 0)]
+        public void should_return_without_cleaning_when_recycle_bin_cleanup_is_disabled(bool recycleBinEnabled, int cleanupDays)
         {
-            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinEnabled).Returns(false);
-
-            Mocker.Resolve<RecycleBinProvider>().Cleanup();
-
-            Mocker.GetMock<IDiskProvider>().Verify(v => v.GetDirectories(It.IsAny<string>()), Times.Never());
-        }
-
-        [Test]
-        public void should_return_if_recycleBinCleanupDays_is_zero()
-        {
-            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinCleanupDays).Returns(0);
+            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinEnabled).Returns(recycleBinEnabled);
+            Mocker.GetMock<IConfigService>().SetupGet(s => s.RecycleBinCleanupDays).Returns(cleanupDays);
 
             Mocker.Resolve<RecycleBinProvider>().Cleanup();
 
@@ -89,22 +81,13 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
         }
 
         [Test]
-        public void should_not_delete_all_non_expired_folders()
+        public void should_not_delete_non_expired_entries()
         {
             WithNonExpired();
             Mocker.Resolve<RecycleBinProvider>().Cleanup();
 
             Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFolder(It.IsAny<string>(), true), Times.Never());
-        }
-
-        [Test]
-        public void should_not_delete_all_non_expired_files()
-        {
-            WithNonExpired();
-            Mocker.Resolve<RecycleBinProvider>().Cleanup();
-
             Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFile(It.IsAny<string>()), Times.Never());
         }
-
     }
 }
