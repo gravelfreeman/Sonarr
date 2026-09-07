@@ -61,6 +61,5 @@ namespace NzbDrone.Core.Test.RootFolderTests
             GivenRootFolders(@"C:\Test\TV".AsOsAgnostic(), @"D:\Test\TV".AsOsAgnostic());
             Subject.GetBestRootFolderPath(seriesPath).Should().Be(@"T:\Test\TV");
         }
-
     }
 }

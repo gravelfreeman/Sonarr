@@ -75,6 +75,5 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
             Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable("/"), Times.Once());
             Mocker.GetMock<IDiskProvider>().Verify(v => v.FolderWritable("/.bin"), Times.Never());
         }
-
     }
 }
