@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
@@ -63,21 +62,5 @@ namespace NzbDrone.Core.Test.RootFolderTests
             Subject.GetBestRootFolderPath(seriesPath).Should().Be(@"T:\Test\TV");
         }
 
-        [Test]
-        public void should_not_cache_result_when_root_folders_are_provided()
-        {
-            var seriesPath = @"/media/library/Series Title";
-            var firstRootFolders = new List<RootFolder>
-            {
-                new RootFolder { Path = @"/media/library" }
-            };
-            var secondRootFolders = new List<RootFolder>
-            {
-                new RootFolder { Path = @"/media" }
-            };
-
-            Subject.GetBestRootFolderPath(seriesPath, firstRootFolders).Should().Be(@"/media/library");
-            Subject.GetBestRootFolderPath(seriesPath, secondRootFolders).Should().Be(@"/media");
-        }
     }
 }

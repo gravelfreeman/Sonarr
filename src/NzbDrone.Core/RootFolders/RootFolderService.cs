@@ -21,9 +21,7 @@ namespace NzbDrone.Core.RootFolders
         void Remove(int id);
         RootFolder Get(int id, bool timeout);
         RootFolder GetBestRootFolder(string path);
-        RootFolder GetBestRootFolder(string path, List<RootFolder> rootFolders);
         string GetBestRootFolderPath(string path);
-        string GetBestRootFolderPath(string path, List<RootFolder> rootFolders);
     }
 
     public class RootFolderService : IRootFolderService
@@ -198,25 +196,13 @@ namespace NzbDrone.Core.RootFolders
 
         public RootFolder GetBestRootFolder(string path)
         {
-            return GetBestRootFolder(path, null);
-        }
-
-        public RootFolder GetBestRootFolder(string path, List<RootFolder> rootFolders)
-        {
-            var allRootFoldersToConsider = rootFolders ?? All();
-
-            return allRootFoldersToConsider.Where(r => r.Path.IsParentPath(path))
+            return All().Where(r => r.Path.IsParentPath(path))
                                            .MaxBy(r => r.Path.Length);
         }
 
         public string GetBestRootFolderPath(string path)
         {
             return _cache.Get(path, () => GetBestRootFolderPathInternal(path), TimeSpan.FromDays(1));
-        }
-
-        public string GetBestRootFolderPath(string path, List<RootFolder> rootFolders)
-        {
-            return GetBestRootFolderPathInternal(path, rootFolders);
         }
 
         private void GetDetails(RootFolder rootFolder, Dictionary<int, string> seriesPaths, bool timeout)
@@ -233,9 +219,9 @@ namespace NzbDrone.Core.RootFolders
             }).Wait(timeout ? 5000 : -1);
         }
 
-        private string GetBestRootFolderPathInternal(string path, List<RootFolder> rootFolders = null)
+        private string GetBestRootFolderPathInternal(string path)
         {
-            var possibleRootFolder = GetBestRootFolder(path, rootFolders);
+            var possibleRootFolder = GetBestRootFolder(path);
 
             if (possibleRootFolder == null)
             {
