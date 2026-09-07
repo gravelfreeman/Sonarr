@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
@@ -60,19 +59,14 @@ namespace Sonarr.Api.V3.Config
                 return rootFolder;
             }).ToList();
 
-            var configValues = resource.GetType()
-                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                .Where(x => x.Name != nameof(MediaManagementConfigResource.RootFolderUpdates))
-                .ToDictionary(prop => prop.Name, prop => prop.GetValue(resource, null));
-
-            _configService.SaveConfigDictionary(configValues);
+            var result = base.SaveConfig(resource);
 
             if (models.Any())
             {
                 _rootFolderRepository.SetFields(models, x => x.RecycleBinEnabled);
             }
 
-            return Accepted(resource.Id);
+            return result;
         }
 
         protected override MediaManagementConfigResource ToResource(IConfigService model)
