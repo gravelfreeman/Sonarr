@@ -271,7 +271,6 @@ namespace NzbDrone.Core.MediaFiles
         private string[] GetRecycleBins()
         {
             return _rootFolderService.All()
-                                     .Where(r => r.RecycleBinEnabled)
                                      .Select(r => RecycleBinPathBuilder.GetRecycleBinDestination(r.Path))
                                      .Where(r => r.IsNotNullOrWhiteSpace())
                                      .Distinct(PathEqualityComparer.Instance)

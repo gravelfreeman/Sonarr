@@ -73,10 +73,16 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
             Mocker.GetMock<IDiskProvider>().Verify(v => v.GetDirectories(It.IsAny<string>()), Times.Never());
         }
 
-        [Test]
-        public void should_delete_all_expired_files()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void should_cleanup_root_folder_recycle_bin(bool recycleBinEnabled)
         {
+            Mocker.GetMock<IRootFolderService>().Setup(s => s.All()).Returns(new[]
+            {
+                new RootFolder { Path = RootFolder, RecycleBinEnabled = recycleBinEnabled }
+            }.ToList());
             WithExpired();
+
             Mocker.Resolve<RecycleBinProvider>().Cleanup();
 
             Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFile(It.IsAny<string>()), Times.Exactly(2));
@@ -99,5 +105,6 @@ namespace NzbDrone.Core.Test.ProviderTests.RecycleBinProviderTests
 
             Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFile(It.IsAny<string>()), Times.Never());
         }
+
     }
 }
