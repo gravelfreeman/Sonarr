@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches:
@@ -10,38 +9,29 @@ on:
       - 'sync/**'
   pull_request:
   workflow_dispatch:
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 6.0.405
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 20.11.1
           cache: yarn
-
       - name: Restore backend dependencies
         run: dotnet restore src/Sonarr.sln
-
       - name: Install frontend dependencies
         run: yarn install --frozen-lockfile --network-timeout 120000
-
       - name: Build backend
         run: dotnet build src/Sonarr.sln -c Debug --no-restore -p:RunAnalyzers=false
-
       - name: Build frontend
         run: yarn build
-
       - name: Run targeted recycle bin tests
         run: >
           dotnet test src/NzbDrone.Core.Test/Sonarr.Core.Test.csproj

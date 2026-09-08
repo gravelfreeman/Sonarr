@@ -1,2 +1,12 @@
+# Keep the Docker build context limited to the files needed to compile Sonarr.
 *
+!Dockerfile
 !entrypoint.sh
+!package.json
+!yarn.lock
+!tsconfig.json
+!frontend
+!frontend/**
+!src
+!src/**
+!Logo
