@@ -1,5 +1,4 @@
-﻿using System.IO;
-using NLog;
+﻿using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.MediaFiles;
@@ -70,8 +69,7 @@ namespace NzbDrone.Core.Extras.Others
 
             if (otherExtraFile != null)
             {
-                var subfolder = Path.GetDirectoryName(relativePath);
-                _recycleBinProvider.DeleteFile(path, subfolder);
+                _recycleBinProvider.DeleteFile(path);
             }
         }
     }

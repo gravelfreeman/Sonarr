@@ -69,11 +69,9 @@ namespace NzbDrone.Core.MediaFiles
             {
                 _logger.Info("Deleting episode file: {0}", fullPath);
 
-                var subfolder = _diskProvider.GetParentFolder(series.Path).GetRelativePath(_diskProvider.GetParentFolder(fullPath));
-
                 try
                 {
-                    _recycleBinProvider.DeleteFile(fullPath, subfolder);
+                    _recycleBinProvider.DeleteFile(fullPath, RecycleBinOperation.Delete);
                 }
                 catch (Exception e)
                 {
@@ -118,7 +116,7 @@ namespace NzbDrone.Core.MediaFiles
 
                     if (_diskProvider.FolderExists(series.Path))
                     {
-                        _recycleBinProvider.DeleteFolder(series.Path);
+                        _recycleBinProvider.DeleteFolder(series.Path, RecycleBinOperation.Delete);
                     }
 
                     _eventAggregator.PublishEvent(new DeleteCompletedEvent());

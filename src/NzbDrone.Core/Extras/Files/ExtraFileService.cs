@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using NLog;
 using NzbDrone.Common.Disk;
-using NzbDrone.Common.Extensions;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
@@ -112,6 +111,9 @@ namespace NzbDrone.Core.Extras.Files
             else
             {
                 var series = _seriesService.GetSeries(message.EpisodeFile.SeriesId);
+                var operation = message.Reason == DeleteMediaFileReason.Upgrade
+                    ? RecycleBinOperation.Upgrade
+                    : RecycleBinOperation.Delete;
 
                 foreach (var extra in _repository.GetFilesByEpisodeFile(episodeFile.Id))
                 {
@@ -120,8 +122,7 @@ namespace NzbDrone.Core.Extras.Files
                     if (_diskProvider.FileExists(path))
                     {
                         // Send to the recycling bin so they can be recovered if necessary
-                        var subfolder = _diskProvider.GetParentFolder(series.Path).GetRelativePath(_diskProvider.GetParentFolder(path));
-                        _recycleBinProvider.DeleteFile(path, subfolder);
+                        _recycleBinProvider.DeleteFile(path, operation);
                     }
                 }
             }

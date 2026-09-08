@@ -100,6 +100,27 @@ const fileDateOptions = [
   }
 ];
 
+const recycleBinModeOptions = [
+  {
+    key: 'both',
+    get value() {
+      return translate('Both');
+    }
+  },
+  {
+    key: 'upgradesOnly',
+    get value() {
+      return translate('UpgradesOnly');
+    }
+  },
+  {
+    key: 'deletesOnly',
+    get value() {
+      return translate('DeletesOnly');
+    }
+  }
+];
+
 class MediaManagement extends Component {
 
   //
@@ -115,6 +136,7 @@ class MediaManagement extends Component {
       isWindows,
       onInputChange,
       onSavePress,
+      pendingChanges,
       ...otherProps
     } = this.props;
 
@@ -426,11 +448,28 @@ class MediaManagement extends Component {
                     <FormLabel>{translate('RecyclingBin')}</FormLabel>
 
                     <FormInputGroup
-                      type={inputTypes.PATH}
-                      name="recycleBin"
+                      type={inputTypes.CHECK}
+                      name="recycleBinEnabled"
                       helpText={translate('RecyclingBinHelpText')}
                       onChange={onInputChange}
-                      {...settings.recycleBin}
+                      {...settings.recycleBinEnabled}
+                    />
+                  </FormGroup>
+
+                  <FormGroup
+                    advancedSettings={advancedSettings}
+                    isAdvanced={true}
+                  >
+                    <FormLabel>{translate('UseRecyclingBinFor')}</FormLabel>
+
+                    <FormInputGroup
+                      type={inputTypes.SELECT}
+                      name="recycleBinMode"
+                      helpText={translate('UseRecyclingBinForHelpText')}
+                      values={recycleBinModeOptions}
+                      isDisabled={!settings.recycleBinEnabled.value}
+                      onChange={onInputChange}
+                      {...settings.recycleBinMode}
                     />
                   </FormGroup>
 
@@ -512,7 +551,10 @@ class MediaManagement extends Component {
           }
 
           <FieldSet legend={translate('RootFolders')}>
-            <RootFolders />
+            <RootFolders
+              rootFolderUpdates={pendingChanges.rootFolderUpdates}
+              onInputChange={onInputChange}
+            />
             <AddRootFolder />
           </FieldSet>
         </PageContentBody>
@@ -530,7 +572,8 @@ MediaManagement.propTypes = {
   hasSettings: PropTypes.bool.isRequired,
   isWindows: PropTypes.bool.isRequired,
   onSavePress: PropTypes.func.isRequired,
-  onInputChange: PropTypes.func.isRequired
+  onInputChange: PropTypes.func.isRequired,
+  pendingChanges: PropTypes.object.isRequired
 };
 
 export default MediaManagement;

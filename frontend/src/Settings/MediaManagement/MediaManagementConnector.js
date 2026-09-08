@@ -80,7 +80,8 @@ MediaManagementConnector.propTypes = {
   setMediaManagementSettingsValue: PropTypes.func.isRequired,
   saveMediaManagementSettings: PropTypes.func.isRequired,
   saveNamingSettings: PropTypes.func.isRequired,
-  clearPendingChanges: PropTypes.func.isRequired
+  clearPendingChanges: PropTypes.func.isRequired,
+  pendingChanges: PropTypes.object.isRequired
 };
 
 export default connect(createMapStateToProps, mapDispatchToProps)(MediaManagementConnector);
