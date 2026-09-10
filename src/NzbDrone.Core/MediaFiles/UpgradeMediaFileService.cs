@@ -60,7 +60,7 @@ namespace NzbDrone.Core.MediaFiles
                 if (_diskProvider.FileExists(episodeFilePath))
                 {
                     _logger.Debug("Removing existing episode file: {0}", file);
-                    recycleBinPath = _recycleBinProvider.DeleteFile(episodeFilePath, RecycleBinOperation.Upgrade);
+                    recycleBinPath = _recycleBinProvider.DeleteFile(episodeFilePath, DeleteMediaFileReason.Upgrade);
                 }
 
                 moveFileResult.OldFiles.Add(new DeletedEpisodeFile(file, recycleBinPath));
