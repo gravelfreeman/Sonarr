@@ -1639,6 +1639,7 @@
   "Reason": "Reason",
   "RecentChanges": "Recent Changes",
   "RecentFolders": "Recent Folders",
+  "RecycleBinUnableToDetermineMountHealthCheckMessage": "Unable to determine the mount for root folder: {path}. Ensure this path exists and is accessible to the user running {appName}",
   "RecycleBinUnableToWriteHealthCheckMessage": "Unable to write to configured recycling bin folder: {path}. Ensure this path exists and is writable by the user running {appName}",
   "RecyclingBin": "Recycling Bin",
   "RecyclingBinCleanup": "Recycling Bin Cleanup",
