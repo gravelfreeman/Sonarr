@@ -116,7 +116,7 @@ namespace NzbDrone.Core.MediaFiles
 
                     if (_diskProvider.FolderExists(series.Path))
                     {
-                        _recycleBinProvider.DeleteFolder(series.Path, RecycleBinOperation.Delete);
+                        _recycleBinProvider.DeleteFolder(series.Path);
                     }
 
                     _eventAggregator.PublishEvent(new DeleteCompletedEvent());
