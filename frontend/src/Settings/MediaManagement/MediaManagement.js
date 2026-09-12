@@ -553,6 +553,7 @@ class MediaManagement extends Component {
           <FieldSet legend={translate('RootFolders')}>
             <RootFolders
               rootFolderUpdates={pendingChanges.rootFolderUpdates}
+              rootFolderUpdatesErrors={settings.rootFolderUpdates && settings.rootFolderUpdates.errors}
               onInputChange={onInputChange}
             />
             <AddRootFolder />

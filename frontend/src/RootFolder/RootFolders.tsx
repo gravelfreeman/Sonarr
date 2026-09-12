@@ -8,6 +8,7 @@ import { kinds } from 'Helpers/Props';
 import { fetchRootFolders } from 'Store/Actions/rootFolderActions';
 import createRootFoldersSelector from 'Store/Selectors/createRootFoldersSelector';
 import { InputOnChange } from 'typings/inputs';
+import { Failure } from 'typings/pending';
 import translate from 'Utilities/String/translate';
 import RootFolderRow from './RootFolderRow';
 
@@ -51,11 +52,16 @@ const EMPTY_ROOT_FOLDER_UPDATES: RootFolderUpdate[] = [];
 
 interface RootFoldersProps {
   rootFolderUpdates?: RootFolderUpdate[] | null;
+  rootFolderUpdatesErrors?: Failure[];
   onInputChange?: InputOnChange<RootFolderUpdate[] | null>;
 }
 
 function RootFolders(props: RootFoldersProps) {
-  const { rootFolderUpdates: pendingUpdates, onInputChange } = props;
+  const {
+    rootFolderUpdates: pendingUpdates,
+    rootFolderUpdatesErrors,
+    onInputChange,
+  } = props;
   const rootFolderUpdates = pendingUpdates ?? EMPTY_ROOT_FOLDER_UPDATES;
   const { isFetching, isPopulated, error, items } = useSelector(
     createRootFoldersSelector()
@@ -89,6 +95,24 @@ function RootFolders(props: RootFoldersProps) {
     dispatch(fetchRootFolders());
   }, [dispatch]);
 
+  useEffect(() => {
+    if (!isPopulated) {
+      return;
+    }
+
+    const rootFolderIds = new Set(items.map((item) => item.id));
+    const updates = rootFolderUpdates.filter((update) =>
+      rootFolderIds.has(update.id)
+    );
+
+    if (updates.length !== rootFolderUpdates.length) {
+      onInputChange?.({
+        name: 'rootFolderUpdates',
+        value: updates.length > 0 ? updates : null,
+      });
+    }
+  }, [isPopulated, items, onInputChange, rootFolderUpdates]);
+
   if (isFetching && !isPopulated) {
     return <LoadingIndicator />;
   }
@@ -100,33 +124,41 @@ function RootFolders(props: RootFoldersProps) {
   }
 
   return (
-    <Table
-      columns={
-        onInputChange ? rootFolderColumns : rootFolderColumnsWithoutRecycleBin
-      }
-    >
-      <TableBody>
-        {items.map((rootFolder) => {
-          return (
-            <RootFolderRow
-              key={rootFolder.id}
-              id={rootFolder.id}
-              path={rootFolder.path}
-              recycleBinEnabled={
-                rootFolderUpdatesById[rootFolder.id]?.recycleBinEnabled ??
-                rootFolder.recycleBinEnabled
-              }
-              accessible={rootFolder.accessible}
-              freeSpace={rootFolder.freeSpace}
-              unmappedFolders={rootFolder.unmappedFolders}
-              onRecycleBinChange={
-                onInputChange ? onRecycleBinChange : undefined
-              }
-            />
-          );
-        })}
-      </TableBody>
-    </Table>
+    <>
+      {rootFolderUpdatesErrors?.map((error, index) => (
+        <Alert key={index} kind={kinds.DANGER}>
+          {error.errorMessage}
+        </Alert>
+      ))}
+
+      <Table
+        columns={
+          onInputChange ? rootFolderColumns : rootFolderColumnsWithoutRecycleBin
+        }
+      >
+        <TableBody>
+          {items.map((rootFolder) => {
+            return (
+              <RootFolderRow
+                key={rootFolder.id}
+                id={rootFolder.id}
+                path={rootFolder.path}
+                recycleBinEnabled={
+                  rootFolderUpdatesById[rootFolder.id]?.recycleBinEnabled ??
+                  rootFolder.recycleBinEnabled
+                }
+                accessible={rootFolder.accessible}
+                freeSpace={rootFolder.freeSpace}
+                unmappedFolders={rootFolder.unmappedFolders}
+                onRecycleBinChange={
+                  onInputChange ? onRecycleBinChange : undefined
+                }
+              />
+            );
+          })}
+        </TableBody>
+      </Table>
+    </>
   );
 }
 
