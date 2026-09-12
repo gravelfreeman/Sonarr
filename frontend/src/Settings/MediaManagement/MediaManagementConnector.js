@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
+import { fetchRootFolders } from 'Store/Actions/rootFolderActions';
 import { fetchMediaManagementSettings, saveMediaManagementSettings, saveNamingSettings, setMediaManagementSettingsValue } from 'Store/Actions/settingsActions';
 import createSettingsSectionSelector from 'Store/Selectors/createSettingsSectionSelector';
 import createSystemStatusSelector from 'Store/Selectors/createSystemStatusSelector';
@@ -17,11 +18,15 @@ function createMapStateToProps() {
     (state) => state.settings.naming,
     createSettingsSectionSelector(SECTION),
     createSystemStatusSelector(),
-    (advancedSettings, namingSettings, sectionSettings, systemStatus) => {
+    (state) => state.app.isConnected,
+    (state) => state.app.isDisconnected,
+    (state) => state.app.isReconnecting,
+    (advancedSettings, namingSettings, sectionSettings, systemStatus, isConnected, isDisconnected, isReconnecting) => {
       return {
         advancedSettings,
         ...sectionSettings,
         hasPendingChanges: !_.isEmpty(namingSettings.pendingChanges) || sectionSettings.hasPendingChanges,
+        isSignalRConnected: isConnected && !isDisconnected && !isReconnecting,
         isWindows: systemStatus.isWindows
       };
     }
@@ -30,6 +35,7 @@ function createMapStateToProps() {
 
 const mapDispatchToProps = {
   fetchMediaManagementSettings,
+  fetchRootFolders,
   setMediaManagementSettingsValue,
   saveMediaManagementSettings,
   saveNamingSettings,
@@ -43,6 +49,26 @@ class MediaManagementConnector extends Component {
 
   componentDidMount() {
     this.props.fetchMediaManagementSettings();
+  }
+
+  componentDidUpdate(prevProps) {
+    const {
+      isSaving,
+      isSignalRConnected,
+      saveError
+    } = this.props;
+
+    if (
+      !prevProps.isSaving ||
+      isSaving ||
+      saveError ||
+      isSignalRConnected ||
+      !prevProps.pendingChanges.rootFolderUpdates?.length
+    ) {
+      return;
+    }
+
+    this.props.fetchRootFolders();
   }
 
   componentWillUnmount() {
@@ -77,11 +103,15 @@ class MediaManagementConnector extends Component {
 
 MediaManagementConnector.propTypes = {
   fetchMediaManagementSettings: PropTypes.func.isRequired,
+  fetchRootFolders: PropTypes.func.isRequired,
   setMediaManagementSettingsValue: PropTypes.func.isRequired,
   saveMediaManagementSettings: PropTypes.func.isRequired,
   saveNamingSettings: PropTypes.func.isRequired,
   clearPendingChanges: PropTypes.func.isRequired,
-  pendingChanges: PropTypes.object.isRequired
+  pendingChanges: PropTypes.object.isRequired,
+  isSaving: PropTypes.bool.isRequired,
+  isSignalRConnected: PropTypes.bool.isRequired,
+  saveError: PropTypes.object
 };
 
 export default connect(createMapStateToProps, mapDispatchToProps)(MediaManagementConnector);
