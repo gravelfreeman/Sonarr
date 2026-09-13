@@ -3,7 +3,7 @@ import createAjaxRequest from 'Utilities/createAjaxRequest';
 import getSectionState from 'Utilities/State/getSectionState';
 import { set, update } from '../baseActions';
 
-function createSaveHandler(section, url, onSuccess) {
+function createSaveHandler(section, url) {
   return function(getState, payload, dispatch) {
     dispatch(set({ section, isSaving: true }));
 
@@ -28,8 +28,6 @@ function createSaveHandler(section, url, onSuccess) {
           pendingChanges: {}
         })
       ]));
-
-      onSuccess?.(dispatch, saveData);
     });
 
     promise.fail((xhr) => {
