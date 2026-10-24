@@ -1,9 +1,11 @@
 FROM mcr.microsoft.com/devcontainers/dotnet:1-6.0
 
-ARG CHROME_FOR_TESTING_VERSION=134.0.6998.165
+RUN install -d -m 0755 -o vscode -g vscode \
+    /home/vscode/.local \
+    /home/vscode/.local/share \
+    /home/vscode/.local/state
 
-RUN install -d -m 0755 /opt/1Password
-RUN install -d -m 0700 -o vscode -g vscode /home/vscode/.1password
+ARG CHROME_FOR_TESTING_VERSION=134.0.6998.165
 
 RUN set -eux; \
     rm -f /etc/apt/sources.list.d/yarn.list; \
