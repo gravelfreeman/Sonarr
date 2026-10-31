@@ -526,8 +526,7 @@ namespace NzbDrone.Core.Extras.Metadata
 
                 _logger.Debug("Removing duplicate Metadata file: {0}", path);
 
-                var subfolder = _diskProvider.GetParentFolder(series.Path).GetRelativePath(_diskProvider.GetParentFolder(path));
-                _recycleBinProvider.DeleteFile(path, subfolder);
+                _recycleBinProvider.DeleteFile(path);
                 _metadataFileService.Delete(file.Id);
             }
 
