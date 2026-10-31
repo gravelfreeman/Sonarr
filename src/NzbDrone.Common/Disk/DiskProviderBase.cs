@@ -497,6 +497,11 @@ namespace NzbDrone.Common.Disk
             }
         }
 
+        public virtual string GetActualPath(string path)
+        {
+            return path;
+        }
+
         protected List<DriveInfo> GetDriveInfoMounts()
         {
             return DriveInfo.GetDrives()
