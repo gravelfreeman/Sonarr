@@ -35,7 +35,9 @@ namespace NzbDrone.Automation.Test
         public void SmokeTestSetup()
         {
             var options = new ChromeOptions();
-            options.AddArguments("--headless");
+
+            // Unprivileged user namespaces are restricted in the devcontainer.
+            options.AddArguments("--headless", "--no-sandbox");
             var service = ChromeDriverService.CreateDefaultService();
 
             // Timeout as windows automation tests seem to take alot longer to get going
