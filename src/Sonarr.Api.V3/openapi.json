@@ -10073,9 +10073,16 @@
           "autoUnmonitorPreviouslyDownloadedEpisodes": {
             "type": "boolean"
           },
-          "recycleBin": {
-            "type": "string",
-            "nullable": true
+          "recycleBinEnabled": {
+            "type": "boolean"
+          },
+          "recycleBinMode": {
+            "enum": [
+              "both",
+              "upgradesOnly",
+              "deletesOnly"
+            ],
+            "type": "string"
           },
           "recycleBinCleanupDays": {
             "type": "integer",
@@ -10136,6 +10143,13 @@
           },
           "enableMediaInfo": {
             "type": "boolean"
+          },
+          "rootFolderUpdates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RootFolderUpdateResource"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -11535,6 +11549,9 @@
             "type": "string",
             "nullable": true
           },
+          "recycleBinEnabled": {
+            "type": "boolean"
+          },
           "accessible": {
             "type": "boolean"
           },
@@ -11549,6 +11566,19 @@
               "$ref": "#/components/schemas/UnmappedFolder"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RootFolderUpdateResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recycleBinEnabled": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

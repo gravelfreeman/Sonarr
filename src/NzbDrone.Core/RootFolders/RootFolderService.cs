@@ -20,6 +20,7 @@ namespace NzbDrone.Core.RootFolders
         RootFolder Add(RootFolder rootDir);
         void Remove(int id);
         RootFolder Get(int id, bool timeout);
+        RootFolder GetBestRootFolder(string path);
         string GetBestRootFolderPath(string path);
     }
 
@@ -36,6 +37,7 @@ namespace NzbDrone.Core.RootFolders
         private static readonly HashSet<string> SpecialFolders = new HashSet<string>
                                                                  {
                                                                      "$recycle.bin",
+                                                                     ".bin",
                                                                      "system volume information",
                                                                      "recycler",
                                                                      "lost+found",
@@ -192,6 +194,12 @@ namespace NzbDrone.Core.RootFolders
             return rootFolder;
         }
 
+        public RootFolder GetBestRootFolder(string path)
+        {
+            return All().Where(r => r.Path.IsParentPath(path))
+                                           .MaxBy(r => r.Path.Length);
+        }
+
         public string GetBestRootFolderPath(string path)
         {
             return _cache.Get(path, () => GetBestRootFolderPathInternal(path), TimeSpan.FromDays(1));
@@ -213,7 +221,7 @@ namespace NzbDrone.Core.RootFolders
 
         private string GetBestRootFolderPathInternal(string path)
         {
-            var possibleRootFolder = All().Where(r => r.Path.IsParentPath(path)).MaxBy(r => r.Path.Length);
+            var possibleRootFolder = GetBestRootFolder(path);
 
             if (possibleRootFolder == null)
             {
