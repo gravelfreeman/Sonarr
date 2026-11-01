@@ -50,6 +50,7 @@ namespace NzbDrone.Common.Disk
         FileStream OpenWriteStream(string path);
         List<IMount> GetMounts();
         IMount GetMount(string path);
+        string GetActualPath(string path);
         List<DirectoryInfo> GetDirectoryInfos(string path);
         List<FileInfo> GetFileInfos(string path);
         void RemoveEmptySubfolders(string path);
